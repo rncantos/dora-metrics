@@ -35,6 +35,11 @@ export default function App() {
 
   const exportPDF = () => {
     const element = pdfRef.current;
+    
+    // Bring element into viewport temporarily to ensure html2canvas captures it
+    element.style.position = 'relative';
+    element.style.left = '0';
+    
     const opt = {
       margin: 0.5,
       filename: `DORA_Executive_Report_${repoName.replace('/', '_')}.pdf`,
@@ -42,7 +47,12 @@ export default function App() {
       html2canvas: { scale: 2, useCORS: true, windowWidth: 800, backgroundColor: '#ffffff' },
       jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
     };
-    html2pdf().set(opt).from(element).save();
+    
+    html2pdf().set(opt).from(element).save().then(() => {
+      // Hide it back
+      element.style.position = 'absolute';
+      element.style.left = '-9999px';
+    });
   };
 
   const loadFromHistory = (item) => {
