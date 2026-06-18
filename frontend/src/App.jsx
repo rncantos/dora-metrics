@@ -41,11 +41,12 @@ export default function App() {
     element.style.left = '0';
     
     const opt = {
-      margin: 0.5,
+      margin: [0.5, 0.5, 0.5, 0.5],
       filename: `DORA_Executive_Report_${repoName.replace('/', '_')}.pdf`,
       image: { type: 'jpeg', quality: 1 },
       html2canvas: { scale: 2, useCORS: true, windowWidth: 800, backgroundColor: '#ffffff' },
-      jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+      jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
     };
     
     html2pdf().set(opt).from(element).save().then(() => {
@@ -277,50 +278,68 @@ export default function App() {
 
       {/* Hidden Enterprise PDF Template */}
       <div ref={pdfRef} className="pdf-export-container">
+        {/* CABECERA CORPORATIVA */}
         <div className="pdf-header">
-          <div>
-            <h1>DORA Metrics Executive Audit</h1>
-            <p>Target: {repoName} | Generated: {new Date().toLocaleDateString()}</p>
+          <div className="pdf-logo-wrapper">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
+            <div className="pdf-logo-text">
+              <span className="logo-bold">DORA</span>
+              <span className="logo-light">Metrics AI</span>
+            </div>
           </div>
-          <div className="pdf-logo">DORA AI</div>
+          <div className="pdf-header-meta">
+            <h2>Executive Audit Report</h2>
+            <p>Target Repository: <strong>{repoName}</strong></p>
+            <p>Generated: {new Date().toLocaleDateString()}</p>
+          </div>
         </div>
 
-        {executiveData && (
-          <>
-            <div className="pdf-section-title">Key Performance Indicators</div>
-            <div className="pdf-grid">
-              <div className="pdf-metric">
-                <div className="pdf-metric-title">Deployment Frequency</div>
-                <div className="pdf-metric-value">{executiveData.df}</div>
+        <div className="pdf-body">
+          {executiveData && (
+            <>
+              <div className="pdf-section-title">Key Performance Indicators</div>
+              <div className="pdf-grid">
+                <div className="pdf-metric">
+                  <div className="pdf-metric-title">Deployment Frequency</div>
+                  <div className="pdf-metric-value">{executiveData.df}</div>
+                </div>
+                <div className="pdf-metric">
+                  <div className="pdf-metric-title">Lead Time for Changes</div>
+                  <div className="pdf-metric-value">{executiveData.ltc}</div>
+                </div>
+                <div className="pdf-metric">
+                  <div className="pdf-metric-title">PR Cycle Time</div>
+                  <div className="pdf-metric-value">{executiveData.pr_cycle_time}</div>
+                </div>
+                <div className="pdf-metric">
+                  <div className="pdf-metric-title">Mean Time to Recovery</div>
+                  <div className="pdf-metric-value">{executiveData.mttr}</div>
+                </div>
+                <div className="pdf-metric">
+                  <div className="pdf-metric-title">Change Failure Rate</div>
+                  <div className="pdf-metric-value">{executiveData.cfr}</div>
+                </div>
               </div>
-              <div className="pdf-metric">
-                <div className="pdf-metric-title">Lead Time for Changes</div>
-                <div className="pdf-metric-value">{executiveData.ltc}</div>
-              </div>
-              <div className="pdf-metric">
-                <div className="pdf-metric-title">PR Cycle Time</div>
-                <div className="pdf-metric-value">{executiveData.pr_cycle_time}</div>
-              </div>
-              <div className="pdf-metric">
-                <div className="pdf-metric-title">Mean Time to Recovery</div>
-                <div className="pdf-metric-value">{executiveData.mttr}</div>
-              </div>
-              <div className="pdf-metric">
-                <div className="pdf-metric-title">Change Failure Rate</div>
-                <div className="pdf-metric-value">{executiveData.cfr}</div>
-              </div>
-            </div>
-          </>
-        )}
+            </>
+          )}
 
-        {report && (
-          <>
-            <div className="pdf-section-title">Detailed Analysis Report</div>
-            <div className="pdf-report">
-              <ReactMarkdown>{report}</ReactMarkdown>
-            </div>
-          </>
-        )}
+          {report && (
+            <>
+              <div className="pdf-section-title">Detailed Analysis Report</div>
+              <div className="pdf-report">
+                <ReactMarkdown>{report}</ReactMarkdown>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* PIE DE PÁGINA CORPORATIVO */}
+        <div className="pdf-footer">
+          <p>&copy; {new Date().getFullYear()} DORA Metrics AI. All rights reserved. Highly Confidential Document.</p>
+          <p>Generated automatically by Neuro-DevOps Agent.</p>
+        </div>
       </div>
     </div>
   );

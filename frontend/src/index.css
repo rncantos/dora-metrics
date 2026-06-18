@@ -437,25 +437,80 @@ button {
   align-items: flex-end;
 }
 
-.pdf-header h1 {
-  margin: 0;
+.pdf-logo-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pdf-logo-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.logo-bold {
+  font-size: 24px;
+  font-weight: 900;
   color: #0f172a;
-  font-size: 28px;
-  font-weight: 700;
   letter-spacing: -0.5px;
 }
 
-.pdf-header p {
-  margin: 5px 0 0;
-  color: #64748b;
+.logo-light {
   font-size: 14px;
+  font-weight: 400;
+  color: #64748b;
+  letter-spacing: 2px;
+  text-transform: uppercase;
 }
 
-.pdf-logo {
+.pdf-header-meta {
+  text-align: right;
+}
+
+.pdf-header-meta h2 {
+  margin: 0 0 5px;
+  color: #0f172a;
   font-size: 24px;
-  font-weight: 900;
-  color: #2563eb;
-  letter-spacing: 1px;
+  font-weight: 700;
+}
+
+.pdf-header-meta p {
+  margin: 2px 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.pdf-body {
+  min-height: 600px;
+}
+
+.pdf-footer {
+  margin-top: 50px;
+  padding-top: 20px;
+  border-top: 1px solid #e2e8f0;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+.pdf-footer p {
+  margin: 4px 0;
+}
+
+.pdf-metric, .pdf-section-title, .pdf-report p, .pdf-report h1, .pdf-report h2, .pdf-report h3, .pdf-header, .pdf-footer, .pdf-logo-wrapper, .pdf-grid {
+  page-break-inside: avoid;
+}
+
+.pdf-export-container {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  width: 750px;
+  background: white;
+  color: #1e293b;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  padding: 40px;
 }
 
 .pdf-grid {
