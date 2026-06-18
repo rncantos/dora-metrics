@@ -1,0 +1,259 @@
+import { useState, useEffect, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
+import CountUp from 'react-countup';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Download, History, Terminal, Loader2, GitBranch } from 'lucide-react';
+import html2pdf from 'html2pdf.js';
+import './index.css';
+
+export default function App() {
+  const [repoName, setRepoName] = useState('langchain-ai/langchain');
+  const [loading, setLoading] = useState(false);
+  const [report, setReport] = useState('');
+  const [executiveData, setExecutiveData] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [logs, setLogs] = useState([]);
+  const dashboardRef = useRef(null);
+
+  useEffect(() => {
+    fetchHistory();
+  }, []);
+
+  const fetchHistory = async () => {
+    try {
+      const res = await fetch('http://127.0.0.1:8000/api/history');
+      const data = await res.json();
+      setHistory(data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const exportPDF = () => {
+    const element = dashboardRef.current;
+    const opt = {
+      margin: 0.5,
+      filename: `DORA_${repoName.replace('/', '_')}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#0f172a' },
+      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(element).save();
+  };
+
+  const loadFromHistory = (item) => {
+    setRepoName(item.repo_name);
+    setReport(item.report);
+    setExecutiveData(item.executive_data);
+    setLogs([{ type: 'done', text: '✅ Cargado desde el caché instantáneamente.' }]);
+  };
+
+  const analyzeRepo = async () => {
+    if (!repoName.trim()) return;
+    setLoading(true);
+    setReport('');
+    setExecutiveData(null);
+    setLogs([]);
+
+    try {
+      const res = await fetch('http://127.0.0.1:8000/api/analyze/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ repo_name: repoName })
+      });
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let done = false;
+      let currentReport = "";
+      let buffer = "";
+
+      while (!done) {
+        const { value, done: readerDone } = await reader.read();
+        done = readerDone;
+        if (value) {
+          buffer += decoder.decode(value, { stream: true });
+          
+          let boundary = buffer.indexOf('\n\n');
+          while (boundary !== -1) {
+            const line = buffer.slice(0, boundary);
+            buffer = buffer.slice(boundary + 2);
+            boundary = buffer.indexOf('\n\n');
+            
+            if (line.trim().startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.trim().slice(6));
+                
+                if (data.type === 'tool_start') {
+                  setLogs(l => [...l, { type: 'tool', text: `⏳ Consultando GitHub: ${data.tool}...` }]);
+                } else if (data.type === 'tool_end') {
+                  setLogs(l => [...l, { type: 'success', text: `✅ Datos recibidos de: ${data.tool}` }]);
+                } else if (data.type === 'text') {
+                  currentReport += data.content;
+                  if (!currentReport.includes('---JSON_START---')) {
+                    setReport(currentReport);
+                  } else {
+                    setReport(currentReport.split('---JSON_START---')[0]);
+                  }
+                } else if (data.type === 'done') {
+                  setExecutiveData(data.result.executive_data);
+                  setReport(data.result.report);
+                  setLogs(l => [...l, { type: 'done', text: '🎉 Análisis completado y guardado.' }]);
+                  fetchHistory();
+                } else if (data.type === 'error') {
+                  setLogs(l => [...l, { type: 'error', text: `❌ Error: ${data.content}` }]);
+                }
+              } catch (parseErr) {
+                console.error("JSON parse error on line:", line, parseErr);
+              }
+            }
+          }
+        }
+      }
+    } catch (err) {
+      setLogs(l => [...l, { type: 'error', text: `❌ Hubo un fallo de red: ${err.message}` }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderValue = (val) => {
+    if (!val || val === 'N/A') return 'N/A';
+    const strVal = String(val);
+    const numMatch = strVal.match(/[\\d.]+/);
+    if (numMatch && numMatch[0]) {
+      const num = parseFloat(numMatch[0]);
+      const text = strVal.replace(numMatch[0], '');
+      return (
+        <>
+          <CountUp end={num} decimals={strVal.includes('.') ? 2 : 0} duration={2.5} />
+          <span className="unit">{text}</span>
+        </>
+      );
+    }
+    return strVal;
+  };
+
+  return (
+    <div className="app-layout">
+      {/* Sidebar Historial */}
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <History className="icon" />
+          <h2>Historial</h2>
+        </div>
+        <div className="history-list">
+          {history.map((item, i) => (
+            <div key={i} className="history-item" onClick={() => loadFromHistory(item)}>
+              <GitBranch size={16} />
+              <div className="hist-details">
+                <span className="hist-repo">{item.repo_name}</span>
+                <span className="hist-date">{item.timestamp.replace(/(\\d{4})(\\d{2})(\\d{2})_(\\d{2})(\\d{2})/, '$3/$2/$1 $4:$5')}</span>
+              </div>
+            </div>
+          ))}
+          {history.length === 0 && <p className="no-history">No hay análisis previos.</p>}
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="main-content">
+        <div className="header">
+          <h1>DORA Metrics AI</h1>
+          <p>Auditoría Ejecutiva con Inteligencia Artificial</p>
+        </div>
+
+        <div className="action-bar">
+          <input 
+            type="text" 
+            value={repoName}
+            onChange={(e) => setRepoName(e.target.value)}
+            placeholder="Dueño/Repositorio (ej: facebook/react)"
+            onKeyDown={(e) => e.key === 'Enter' && !loading && analyzeRepo()}
+          />
+          <button onClick={analyzeRepo} disabled={loading} className="btn-primary">
+            {loading ? <><Loader2 className="spin" size={18} /> Pensando...</> : '✨ Analizar'}
+          </button>
+          <button onClick={exportPDF} disabled={!executiveData} className="btn-secondary">
+            <Download size={18} /> PDF
+          </button>
+        </div>
+
+        {/* Terminal en vivo */}
+        {(logs.length > 0 || loading) && (
+          <div className="terminal-card">
+            <div className="terminal-header">
+              <Terminal size={14} /> <span>Agente Neuro-DevOps Activo</span>
+            </div>
+            <div className="terminal-body">
+              {logs.map((log, i) => (
+                <div key={i} className={`log-line ${log.type}`}>{log.text}</div>
+              ))}
+              {loading && <div className="log-line typing">Generando insights en vivo<span>.</span><span>.</span><span>.</span></div>}
+            </div>
+          </div>
+        )}
+
+        {/* Dashboard Exportable */}
+        <div ref={dashboardRef} className="dashboard-export-wrapper">
+          
+          {/* Skeleton Loaders */}
+          {loading && !executiveData && (
+            <div className="skeletons executive-dashboard">
+              <div className="skeleton-card"></div>
+              <div className="skeleton-card"></div>
+              <div className="skeleton-card"></div>
+              <div className="skeleton-card"></div>
+            </div>
+          )}
+
+          {executiveData && (
+            <>
+              <div className="executive-dashboard">
+                <div className="metric-card">
+                  <div className="metric-title">Frecuencia Despliegue</div>
+                  <div className="metric-value">{renderValue(executiveData.df)}</div>
+                </div>
+                <div className="metric-card">
+                  <div className="metric-title">Lead Time</div>
+                  <div className="metric-value">{renderValue(executiveData.ltc)}</div>
+                </div>
+                <div className="metric-card">
+                  <div className="metric-title">MTTR</div>
+                  <div className="metric-value">{renderValue(executiveData.mttr)}</div>
+                </div>
+                <div className="metric-card">
+                  <div className="metric-title">Tasa de Fallos</div>
+                  <div className="metric-value">{renderValue(executiveData.cfr)}</div>
+                </div>
+              </div>
+
+              {executiveData.chart_data && executiveData.chart_data.length > 0 && (
+                <div className="chart-container results-card">
+                  <h3 style={{marginTop:0, color: '#a855f7'}}>Tendencia de Lanzamientos</h3>
+                  <div style={{ width: '100%', height: 250 }}>
+                    <ResponsiveContainer>
+                      <LineChart data={executiveData.chart_data}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                        <XAxis dataKey="name" stroke="#64748b" />
+                        <YAxis stroke="#64748b" allowDecimals={false} />
+                        <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }} />
+                        <Line type="monotone" dataKey="releases" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, fill: '#38bdf8' }} animationDuration={1500} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {report && (
+            <div className="results-card mt-4">
+              <ReactMarkdown>{report}</ReactMarkdown>
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
+  );
+}
