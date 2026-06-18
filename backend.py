@@ -47,8 +47,8 @@ def get_history():
             with open(f, "r") as file:
                 data = json.load(file)
                 history.append(data)
-        except:
-            pass
+        except Exception as e:
+            print(f"Error reading {f}: {e}")
     return history
 
 @app.post("/api/analyze/stream")
@@ -91,8 +91,8 @@ async def analyze_repo_stream(req: AnalyzeRequest, request: Request):
             try:
                 json_str = parts[1].strip().replace("```json", "").replace("```", "")
                 executive_data = json.loads(json_str)
-            except:
-                pass
+            except Exception as e:
+                print(f"Error parsing JSON: {e}")
                 
         # Save results
         os.makedirs("reports", exist_ok=True)
