@@ -4,7 +4,7 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import os
 import warnings
 import datetime
@@ -35,7 +35,7 @@ app.add_middleware(
 )
 
 class AnalyzeRequest(BaseModel):
-    repo_name: str
+    repo_name: str = Field(..., pattern=r"^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$")
 
 @app.get("/api/history")
 def get_history():
