@@ -85,7 +85,8 @@ export default function App() {
                 const data = JSON.parse(line.trim().slice(6));
                 
                 if (data.type === 'tool_start') {
-                  setLogs(l => [...l, { type: 'tool', text: `⏳ Querying GitHub: ${data.tool}...` }]);
+                  const params = Object.keys(data.inputs || {}).length > 0 ? ` [${JSON.stringify(data.inputs)}]` : '';
+                  setLogs(l => [...l, { type: 'tool', text: `⏳ Querying GitHub: ${data.tool}${params}...` }]);
                 } else if (data.type === 'tool_end') {
                   setLogs(l => [...l, { type: 'success', text: `✅ Data received from: ${data.tool}` }]);
                 } else if (data.type === 'text') {

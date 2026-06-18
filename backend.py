@@ -73,7 +73,8 @@ async def analyze_repo_stream(req: AnalyzeRequest, request: Request):
                         yield f"data: {json.dumps({'type': 'text', 'content': chunk})}\\n\\n"
                 
                 elif kind == "on_tool_start":
-                    yield f"data: {json.dumps({'type': 'tool_start', 'tool': event['name']})}\\n\\n"
+                    inputs = event.get("data", {}).get("input", {})
+                    yield f"data: {json.dumps({'type': 'tool_start', 'tool': event['name'], 'inputs': inputs})}\\n\\n"
                     
                 elif kind == "on_tool_end":
                     yield f"data: {json.dumps({'type': 'tool_end', 'tool': event['name']})}\\n\\n"
