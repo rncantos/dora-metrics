@@ -36,21 +36,63 @@ export default function App() {
   const exportPDF = () => {
     const element = pdfRef.current;
     
-    // Bring element into viewport temporarily to ensure html2canvas captures it
     element.style.position = 'relative';
     element.style.left = '0';
     
     const opt = {
-      margin: [0.5, 0.5, 0.5, 0.5],
+      margin: [1, 0.5, 1, 0.5], // Increased top/bottom margins for injected headers/footers
       filename: `DORA_Executive_Report_${repoName.replace('/', '_')}.pdf`,
       image: { type: 'jpeg', quality: 1 },
       html2canvas: { scale: 2, useCORS: true, windowWidth: 800, backgroundColor: '#ffffff' },
       jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
-      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      pagebreak: { mode: ['css', 'legacy'], avoid: ['.pdf-metric', '.pdf-section-title', 'h1', 'h2', 'h3', 'p', 'li', '.pdf-grid'] }
     };
     
-    html2pdf().set(opt).from(element).save().then(() => {
-      // Hide it back
+    html2pdf().from(element).set(opt).toPdf().get('pdf').then(function (pdf) {
+      const totalPages = pdf.internal.getNumberOfPages();
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      
+      for (let i = 1; i <= totalPages; i++) {
+        pdf.setPage(i);
+        
+        // --- HEADER ---
+        // Corporate Blue Line at the top
+        pdf.setDrawColor(15, 23, 42); // #0f172a
+        pdf.setLineWidth(0.02);
+        pdf.line(0.5, 0.8, pageWidth - 0.5, 0.8);
+        
+        // Logo Text
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(16);
+        pdf.setTextColor(37, 99, 235); // #2563eb
+        pdf.text('DORA', 0.5, 0.65);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(10);
+        pdf.setTextColor(100, 116, 139); // #64748b
+        pdf.text('METRICS AI', 1.25, 0.65);
+        
+        // Meta Data Right
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(12);
+        pdf.setTextColor(15, 23, 42); // #0f172a
+        pdf.text('Executive Audit Report', pageWidth - 0.5, 0.5, { align: 'right' });
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(9);
+        pdf.setTextColor(100, 116, 139);
+        pdf.text(`Target: ${repoName}  |  Generated: ${new Date().toLocaleDateString()}`, pageWidth - 0.5, 0.65, { align: 'right' });
+
+        // --- FOOTER ---
+        // Corporate Line at the bottom
+        pdf.setDrawColor(226, 232, 240); // #e2e8f0
+        pdf.line(0.5, pageHeight - 0.7, pageWidth - 0.5, pageHeight - 0.7);
+        
+        pdf.setFontSize(8);
+        pdf.setTextColor(148, 163, 184); // #94a3b8
+        pdf.text(`© ${new Date().getFullYear()} DORA Metrics AI. All rights reserved. Highly Confidential Document.`, 0.5, pageHeight - 0.5);
+        pdf.text(`Page ${i} of ${totalPages}`, pageWidth - 0.5, pageHeight - 0.5, { align: 'right' });
+      }
+    }).save().then(() => {
       element.style.position = 'absolute';
       element.style.left = '-9999px';
     });
@@ -278,24 +320,6 @@ export default function App() {
 
       {/* Hidden Enterprise PDF Template */}
       <div ref={pdfRef} className="pdf-export-container">
-        {/* CABECERA CORPORATIVA */}
-        <div className="pdf-header">
-          <div className="pdf-logo-wrapper">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
-            </svg>
-            <div className="pdf-logo-text">
-              <span className="logo-bold">DORA</span>
-              <span className="logo-light">Metrics AI</span>
-            </div>
-          </div>
-          <div className="pdf-header-meta">
-            <h2>Executive Audit Report</h2>
-            <p>Target Repository: <strong>{repoName}</strong></p>
-            <p>Generated: {new Date().toLocaleDateString()}</p>
-          </div>
-        </div>
-
         <div className="pdf-body">
           {executiveData && (
             <>
@@ -333,12 +357,6 @@ export default function App() {
               </div>
             </>
           )}
-        </div>
-
-        {/* PIE DE PÁGINA CORPORATIVO */}
-        <div className="pdf-footer">
-          <p>&copy; {new Date().getFullYear()} DORA Metrics AI. All rights reserved. Highly Confidential Document.</p>
-          <p>Generated automatically by Neuro-DevOps Agent.</p>
         </div>
       </div>
     </div>
