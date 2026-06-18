@@ -204,6 +204,7 @@ export default function App() {
               <div className="skeleton-card"></div>
               <div className="skeleton-card"></div>
               <div className="skeleton-card"></div>
+              <div className="skeleton-card"></div>
             </div>
           )}
 
@@ -234,15 +235,15 @@ export default function App() {
 
               {executiveData.chart_data && executiveData.chart_data.length > 0 && (
                 <div className="chart-container results-card">
-                  <h3 style={{marginTop:0, color: '#a855f7'}}>Release Trend</h3>
+                  <h3 style={{marginTop:0, color: '#fafafa', fontSize: '1rem', fontWeight: 500}}>Release Trend</h3>
                   <div style={{ width: '100%', height: 250 }}>
                     <ResponsiveContainer>
                       <LineChart data={executiveData.chart_data}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                        <XAxis dataKey="name" stroke="#64748b" />
-                        <YAxis stroke="#64748b" allowDecimals={false} />
-                        <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }} />
-                        <Line type="monotone" dataKey="releases" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, fill: '#38bdf8' }} animationDuration={1500} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                        <XAxis dataKey="name" stroke="#a1a1aa" tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={false} tickLine={false} />
+                        <YAxis stroke="#a1a1aa" allowDecimals={false} tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={false} tickLine={false} />
+                        <Tooltip contentStyle={{ backgroundColor: '#18181b', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '8px', color: '#fafafa' }} itemStyle={{ color: '#fafafa' }} />
+                        <Line type="monotone" dataKey="releases" stroke="#fafafa" strokeWidth={2} dot={{ r: 4, fill: '#09090b', stroke: '#fafafa', strokeWidth: 2 }} activeDot={{ r: 6, fill: '#fafafa' }} animationDuration={1000} />
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
