@@ -5,10 +5,10 @@ This guide will help you get the **DORA Metrics Analyzer** project running in yo
 ## Prerequisites
 
 Make sure you have the following components installed:
-- **Python 3.8+**
-- **Node.js 18+** and **npm**
-- A GitHub account to generate a Personal Access Token.
-- A Google Cloud / Google AI Studio account to generate a Gemini API Key.
+- **Python 3.10+**
+- **Node.js 24+** and **npm**
+- A GitHub Personal Access Token (classic)
+- A Google Gemini API Key
 
 ## 1. Backend Configuration
 
@@ -53,7 +53,23 @@ Make sure you have the following components installed:
    npm install
    ```
 
-## 3. Running the Application
+## Testing & Quality Assurance
+
+To ensure system stability, run the test suites and code coverage tools.
+
+### Backend Tests
+```bash
+pytest --cov=. --cov-report=term
+```
+*Note: The CI pipeline runs `Bandit` as an additional SAST security scan.*
+
+### Frontend Tests
+```bash
+cd frontend
+npm run coverage
+```
+
+## Running the Application
 
 To run the full application, you need to start both the backend server and the frontend development server.
 
