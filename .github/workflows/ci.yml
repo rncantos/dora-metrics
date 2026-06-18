@@ -35,6 +35,11 @@ jobs:
         
     - name: Run Python Tests
       run: pytest tests/
+      
+    - name: Run Python Security Scan (Bandit)
+      run: |
+        pip install bandit
+        bandit -r dora_metrics/ backend.py main.py
 
   frontend-ci:
     name: Frontend CI (Node.js)
