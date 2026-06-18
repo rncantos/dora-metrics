@@ -1,4 +1,7 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -16,7 +19,10 @@ from dora_metrics.agent import create_dora_agent
 
 load_dotenv()
 
+limiter = Limiter(key_func=get_remote_address)
 app = FastAPI()
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",")
 
@@ -46,7 +52,8 @@ def get_history():
     return history
 
 @app.post("/api/analyze/stream")
-async def analyze_repo_stream(req: AnalyzeRequest):
+@limiter.limit("5/minute")
+async def analyze_repo_stream(req: AnalyzeRequest, request: Request):
     if not os.getenv("GOOGLE_API_KEY") or not os.getenv("GITHUB_TOKEN"):
         raise HTTPException(status_code=500, detail="Missing credentials in .env")
 
