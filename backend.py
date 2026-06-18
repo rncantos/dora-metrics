@@ -46,7 +46,7 @@ def get_history():
 @app.post("/api/analyze/stream")
 async def analyze_repo_stream(req: AnalyzeRequest):
     if not os.getenv("GOOGLE_API_KEY") or not os.getenv("GITHUB_TOKEN"):
-        raise HTTPException(status_code=500, detail="Faltan credenciales en .env")
+        raise HTTPException(status_code=500, detail="Missing credentials in .env")
 
     async def generate():
         agent = create_dora_agent()
@@ -73,7 +73,7 @@ async def analyze_repo_stream(req: AnalyzeRequest):
             yield f"data: {json.dumps({'type': 'error', 'content': str(e)})}\\n\\n"
             return
             
-        # Al finalizar, procesar el JSON final
+        # When finished, process the final JSON
         executive_data = None
         report_md = full_output
         if "---JSON_START---" in full_output:
@@ -85,7 +85,7 @@ async def analyze_repo_stream(req: AnalyzeRequest):
             except:
                 pass
                 
-        # Guardar resultados
+        # Save results
         os.makedirs("reports", exist_ok=True)
         safe_repo_name = req.repo_name.replace("/", "_")
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")

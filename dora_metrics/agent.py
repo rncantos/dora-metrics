@@ -8,7 +8,7 @@ from dora_metrics.tools.github_tools import (
 )
 
 def create_dora_agent():
-    # Asegúrate de tener GOOGLE_API_KEY en tu entorno o en el archivo .env
+    # Make sure you have GOOGLE_API_KEY in your environment or .env file
     llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0)
     
     tools = [
@@ -18,23 +18,23 @@ def create_dora_agent():
     ]
     
     prompt = ChatPromptTemplate.from_messages([
-        ("system", """Eres un experto analista DevOps especializado en calcular las métricas DORA.
-        Tu objetivo es analizar un repositorio de GitHub dado y calcular o estimar las 4 métricas DORA:
-        1. Deployment Frequency (Frecuencia de Despliegue)
-        2. Lead Time for Changes (Tiempo de entrega para cambios)
-        3. Mean Time to Recovery (Tiempo medio de recuperación - MTTR)
-        4. Change Failure Rate (Tasa de fallos en cambios)
+        ("system", """You are an expert DevOps analyst specialized in calculating DORA metrics.
+        Your goal is to analyze a given GitHub repository and calculate or estimate the 4 DORA metrics:
+        1. Deployment Frequency
+        2. Lead Time for Changes
+        3. Mean Time to Recovery (MTTR)
+        4. Change Failure Rate
         
-        Usa las herramientas proporcionadas para extraer datos del repositorio (PRs, releases y problemas/bugs).
-        Una vez que tengas suficientes datos, sintetízalos y devuelve un informe estructurado y claro en español sobre las métricas DORA, detallando el cálculo o estimación de cada una.
-        Al final de tu informe, añade la etiqueta exacta '---JSON_START---' seguida de un objeto JSON puro con las siguientes claves:
-        - "df": Frecuencia de Despliegue (ej. "1.28/día" o "Alta")
-        - "ltc": Lead Time for Changes (ej. "16.8h" o "Bajo")
-        - "mttr": Mean Time to Recovery (ej. "N/A" o "Rápido")
-        - "cfr": Change Failure Rate (ej. "6%" o "Medio")
-        - "chart_data": Un array de objetos con "name" (ej. "Mayo" o una fecha) y "releases" (número entero), basado en el histórico de lanzamientos que obtengas de GitHub. Si no hay datos, usa [].
-        Asegúrate de que la parte del JSON sea válida y no haya texto después de ella."""),
-        ("human", "Por favor analiza las métricas DORA para el repositorio: {repo_name}"),
+        Use the provided tools to extract data from the repository (PRs, releases, and issues/bugs).
+        Once you have enough data, synthesize it and return a structured and clear report in English about the DORA metrics, detailing the calculation or estimation of each.
+        At the end of your report, add the exact tag '---JSON_START---' followed by a pure JSON object with the following keys:
+        - "df": Deployment Frequency (e.g. "1.28/day" or "High")
+        - "ltc": Lead Time for Changes (e.g. "16.8h" or "Low")
+        - "mttr": Mean Time to Recovery (e.g. "N/A" or "Fast")
+        - "cfr": Change Failure Rate (e.g. "6%" or "Medium")
+        - "chart_data": An array of objects with "name" (e.g. "May" or a date) and "releases" (integer), based on the release history you get from GitHub. If there is no data, use [].
+        Make sure the JSON part is valid and there is no text after it."""),
+        ("human", "Please analyze the DORA metrics for the repository: {repo_name}"),
         ("placeholder", "{agent_scratchpad}"),
     ])
     

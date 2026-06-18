@@ -45,7 +45,7 @@ export default function App() {
     setRepoName(item.repo_name);
     setReport(item.report);
     setExecutiveData(item.executive_data);
-    setLogs([{ type: 'done', text: '✅ Cargado desde el caché instantáneamente.' }]);
+    setLogs([{ type: 'done', text: '✅ Loaded from cache instantly.' }]);
   };
 
   const analyzeRepo = async () => {
@@ -85,9 +85,9 @@ export default function App() {
                 const data = JSON.parse(line.trim().slice(6));
                 
                 if (data.type === 'tool_start') {
-                  setLogs(l => [...l, { type: 'tool', text: `⏳ Consultando GitHub: ${data.tool}...` }]);
+                  setLogs(l => [...l, { type: 'tool', text: `⏳ Querying GitHub: ${data.tool}...` }]);
                 } else if (data.type === 'tool_end') {
-                  setLogs(l => [...l, { type: 'success', text: `✅ Datos recibidos de: ${data.tool}` }]);
+                  setLogs(l => [...l, { type: 'success', text: `✅ Data received from: ${data.tool}` }]);
                 } else if (data.type === 'text') {
                   currentReport += data.content;
                   if (!currentReport.includes('---JSON_START---')) {
@@ -98,7 +98,7 @@ export default function App() {
                 } else if (data.type === 'done') {
                   setExecutiveData(data.result.executive_data);
                   setReport(data.result.report);
-                  setLogs(l => [...l, { type: 'done', text: '🎉 Análisis completado y guardado.' }]);
+                  setLogs(l => [...l, { type: 'done', text: '🎉 Analysis completed and saved.' }]);
                   fetchHistory();
                 } else if (data.type === 'error') {
                   setLogs(l => [...l, { type: 'error', text: `❌ Error: ${data.content}` }]);
@@ -111,7 +111,7 @@ export default function App() {
         }
       }
     } catch (err) {
-      setLogs(l => [...l, { type: 'error', text: `❌ Hubo un fallo de red: ${err.message}` }]);
+      setLogs(l => [...l, { type: 'error', text: `❌ Network failure: ${err.message}` }]);
     } finally {
       setLoading(false);
     }
@@ -140,7 +140,7 @@ export default function App() {
       <aside className="sidebar">
         <div className="sidebar-header">
           <History className="icon" />
-          <h2>Historial</h2>
+          <h2>History</h2>
         </div>
         <div className="history-list">
           {history.map((item, i) => (
@@ -152,7 +152,7 @@ export default function App() {
               </div>
             </div>
           ))}
-          {history.length === 0 && <p className="no-history">No hay análisis previos.</p>}
+          {history.length === 0 && <p className="no-history">No previous analyses.</p>}
         </div>
       </aside>
 
@@ -160,7 +160,7 @@ export default function App() {
       <main className="main-content">
         <div className="header">
           <h1>DORA Metrics AI</h1>
-          <p>Auditoría Ejecutiva con Inteligencia Artificial</p>
+          <p>Executive Audit with Artificial Intelligence</p>
         </div>
 
         <div className="action-bar">
@@ -168,11 +168,11 @@ export default function App() {
             type="text" 
             value={repoName}
             onChange={(e) => setRepoName(e.target.value)}
-            placeholder="Dueño/Repositorio (ej: facebook/react)"
+            placeholder="Owner/Repository (e.g.: facebook/react)"
             onKeyDown={(e) => e.key === 'Enter' && !loading && analyzeRepo()}
           />
           <button onClick={analyzeRepo} disabled={loading} className="btn-primary">
-            {loading ? <><Loader2 className="spin" size={18} /> Pensando...</> : '✨ Analizar'}
+            {loading ? <><Loader2 className="spin" size={18} /> Thinking...</> : '✨ Analyze'}
           </button>
           <button onClick={exportPDF} disabled={!executiveData} className="btn-secondary">
             <Download size={18} /> PDF
@@ -183,13 +183,13 @@ export default function App() {
         {(logs.length > 0 || loading) && (
           <div className="terminal-card">
             <div className="terminal-header">
-              <Terminal size={14} /> <span>Agente Neuro-DevOps Activo</span>
+              <Terminal size={14} /> <span>Active Neuro-DevOps Agent</span>
             </div>
             <div className="terminal-body">
               {logs.map((log, i) => (
                 <div key={i} className={`log-line ${log.type}`}>{log.text}</div>
               ))}
-              {loading && <div className="log-line typing">Generando insights en vivo<span>.</span><span>.</span><span>.</span></div>}
+              {loading && <div className="log-line typing">Generating live insights<span>.</span><span>.</span><span>.</span></div>}
             </div>
           </div>
         )}
@@ -211,7 +211,7 @@ export default function App() {
             <>
               <div className="executive-dashboard">
                 <div className="metric-card">
-                  <div className="metric-title">Frecuencia Despliegue</div>
+                  <div className="metric-title">Deployment Frequency</div>
                   <div className="metric-value">{renderValue(executiveData.df)}</div>
                 </div>
                 <div className="metric-card">
@@ -223,14 +223,14 @@ export default function App() {
                   <div className="metric-value">{renderValue(executiveData.mttr)}</div>
                 </div>
                 <div className="metric-card">
-                  <div className="metric-title">Tasa de Fallos</div>
+                  <div className="metric-title">Failure Rate</div>
                   <div className="metric-value">{renderValue(executiveData.cfr)}</div>
                 </div>
               </div>
 
               {executiveData.chart_data && executiveData.chart_data.length > 0 && (
                 <div className="chart-container results-card">
-                  <h3 style={{marginTop:0, color: '#a855f7'}}>Tendencia de Lanzamientos</h3>
+                  <h3 style={{marginTop:0, color: '#a855f7'}}>Release Trend</h3>
                   <div style={{ width: '100%', height: 250 }}>
                     <ResponsiveContainer>
                       <LineChart data={executiveData.chart_data}>
