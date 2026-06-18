@@ -17,6 +17,7 @@ export default function App() {
   const [history, setHistory] = useState([]);
   const [logs, setLogs] = useState([]);
   const dashboardRef = useRef(null);
+  const pdfRef = useRef(null);
 
   useEffect(() => {
     fetchHistory();
@@ -33,13 +34,13 @@ export default function App() {
   };
 
   const exportPDF = () => {
-    const element = dashboardRef.current;
+    const element = pdfRef.current;
     const opt = {
       margin: 0.5,
-      filename: `DORA_${repoName.replace('/', '_')}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#0f172a' },
-      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+      filename: `DORA_Executive_Report_${repoName.replace('/', '_')}.pdf`,
+      image: { type: 'jpeg', quality: 1 },
+      html2canvas: { scale: 2, useCORS: true, windowWidth: 800, backgroundColor: '#ffffff' },
+      jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
     };
     html2pdf().set(opt).from(element).save();
   };
@@ -263,6 +264,54 @@ export default function App() {
           )}
         </div>
       </main>
+
+      {/* Hidden Enterprise PDF Template */}
+      <div ref={pdfRef} className="pdf-export-container">
+        <div className="pdf-header">
+          <div>
+            <h1>DORA Metrics Executive Audit</h1>
+            <p>Target: {repoName} | Generated: {new Date().toLocaleDateString()}</p>
+          </div>
+          <div className="pdf-logo">DORA AI</div>
+        </div>
+
+        {executiveData && (
+          <>
+            <div className="pdf-section-title">Key Performance Indicators</div>
+            <div className="pdf-grid">
+              <div className="pdf-metric">
+                <div className="pdf-metric-title">Deployment Frequency</div>
+                <div className="pdf-metric-value">{executiveData.df}</div>
+              </div>
+              <div className="pdf-metric">
+                <div className="pdf-metric-title">Lead Time for Changes</div>
+                <div className="pdf-metric-value">{executiveData.ltc}</div>
+              </div>
+              <div className="pdf-metric">
+                <div className="pdf-metric-title">PR Cycle Time</div>
+                <div className="pdf-metric-value">{executiveData.pr_cycle_time}</div>
+              </div>
+              <div className="pdf-metric">
+                <div className="pdf-metric-title">Mean Time to Recovery</div>
+                <div className="pdf-metric-value">{executiveData.mttr}</div>
+              </div>
+              <div className="pdf-metric">
+                <div className="pdf-metric-title">Change Failure Rate</div>
+                <div className="pdf-metric-value">{executiveData.cfr}</div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {report && (
+          <>
+            <div className="pdf-section-title">Detailed Analysis Report</div>
+            <div className="pdf-report">
+              <ReactMarkdown>{report}</ReactMarkdown>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
