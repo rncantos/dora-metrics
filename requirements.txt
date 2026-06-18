@@ -1,0 +1,7 @@
+langchain
+langchain-google-genai
+langgraph
+PyGithub
+python-dotenv
+pydantic
+urllib3<2
