@@ -1,9 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import ReactMarkdown from 'react-markdown';
-import CountUp from 'react-countup';
+import ReactMarkdownPkg from 'react-markdown';
+import CountUpPkg from 'react-countup';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Download, History, Terminal, Loader2, GitBranch } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
+
+const CountUp = CountUpPkg.default || CountUpPkg;
+const ReactMarkdown = ReactMarkdownPkg.default || ReactMarkdownPkg;
 import './index.css';
 
 export default function App() {
