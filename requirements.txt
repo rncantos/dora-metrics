@@ -5,3 +5,6 @@ PyGithub
 python-dotenv
 pydantic
 urllib3<2
+pytest
+pytest-asyncio
+httpx

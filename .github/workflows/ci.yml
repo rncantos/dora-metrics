@@ -32,6 +32,9 @@ jobs:
         python -m py_compile backend.py main.py
         python -m py_compile dora_metrics/*.py
         python -m py_compile dora_metrics/tools/*.py
+        
+    - name: Run Python Tests
+      run: pytest tests/
 
   frontend-ci:
     name: Frontend CI (Node.js)
@@ -55,6 +58,10 @@ jobs:
     - name: Run Linter
       working-directory: ./frontend
       run: npm run lint
+      
+    - name: Run Frontend Tests
+      working-directory: ./frontend
+      run: npm run test
       
     - name: Build Application
       working-directory: ./frontend
