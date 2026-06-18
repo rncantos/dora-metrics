@@ -1,33 +1,33 @@
-# Referencia de la API
+# API Reference
 
-El backend de FastAPI expone varios endpoints que el frontend consume para funcionar. A continuación, se detalla la documentación de estos endpoints.
+The FastAPI backend exposes several endpoints that the frontend consumes to operate. Below is the documentation for these endpoints.
 
 ## Base URL
-Todas las peticiones a la API asumen que el backend está corriendo en la URL base. Por defecto en desarrollo local: `http://localhost:8000`.
+All API requests assume that the backend is running at the base URL. By default in local development: `http://localhost:8000`.
 
 ---
 
-## 1. Obtener Historial de Reportes
-Retorna la lista de todos los análisis previamente guardados.
+## 1. Get Report History
+Returns the list of all previously saved analyses.
 
 - **URL:** `/api/history`
-- **Método:** `GET`
-- **Respuesta Exitosa:**
-  - **Código:** `200 OK`
-  - **Contenido:** Array de objetos JSON, donde cada objeto representa un reporte completo.
+- **Method:** `GET`
+- **Successful Response:**
+  - **Code:** `200 OK`
+  - **Content:** Array of JSON objects, where each object represents a complete report.
 
-**Ejemplo de Respuesta:**
+**Response Example:**
 ```json
 [
   {
     "id": "20260618_120000",
     "repo_name": "facebook/react",
     "timestamp": "20260618_120000",
-    "report": "# Análisis DORA para facebook/react\\n...",
+    "report": "# DORA Analysis for facebook/react\\n...",
     "executive_data": {
-      "df": "Alta",
+      "df": "High",
       "ltc": "12.5h",
-      "mttr": "Rápido",
+      "mttr": "Fast",
       "cfr": "5%",
       "chart_data": [{"name": "Jun", "releases": 3}]
     }
@@ -37,35 +37,35 @@ Retorna la lista de todos los análisis previamente guardados.
 
 ---
 
-## 2. Iniciar Análisis (Streaming)
-Inicia un nuevo análisis DORA de un repositorio en GitHub. Este endpoint utiliza Server-Sent Events (SSE) para enviar las respuestas progresivamente, permitiendo que la interfaz de usuario muestre el análisis a medida que el modelo de IA "piensa" y obtiene datos.
+## 2. Start Analysis (Streaming)
+Starts a new DORA analysis of a GitHub repository. This endpoint uses Server-Sent Events (SSE) to send responses progressively, allowing the user interface to display the analysis as the AI model "thinks" and fetches data.
 
 - **URL:** `/api/analyze/stream`
-- **Método:** `POST`
-- **Cuerpo (JSON):**
+- **Method:** `POST`
+- **Body (JSON):**
   ```json
   {
-    "repo_name": "propietario/repositorio"
+    "repo_name": "owner/repository"
   }
   ```
 
-### Formato de Streaming (SSE)
-Los eventos enviados por el servidor siguen el formato estándar de SSE (`data: ...\\n\\n`).
-Los datos (`data`) son strings codificados en JSON con los siguientes tipos:
+### Streaming Format (SSE)
+Events sent by the server follow the standard SSE format (`data: ...\\n\\n`).
+The data (`data`) are JSON-encoded strings with the following types:
 
-1. **Texto del modelo (Generación de contenido):**
+1. **Model Text (Content Generation):**
    ```json
-   {"type": "text", "content": "El repositorio muestra..."}
+   {"type": "text", "content": "The repository shows..."}
    ```
-2. **Inicio de uso de herramienta:**
+2. **Tool usage start:**
    ```json
    {"type": "tool_start", "tool": "fetch_recent_pull_requests"}
    ```
-3. **Fin de uso de herramienta:**
+3. **Tool usage end:**
    ```json
    {"type": "tool_end", "tool": "fetch_recent_pull_requests"}
    ```
-4. **Finalización (Análisis completado):**
+4. **Completion (Analysis finished):**
    ```json
    {
      "type": "done",
@@ -80,5 +80,5 @@ Los datos (`data`) son strings codificados en JSON con los siguientes tipos:
    ```
 5. **Error:**
    ```json
-   {"type": "error", "content": "Mensaje de error detallado."}
+   {"type": "error", "content": "Detailed error message."}
    ```

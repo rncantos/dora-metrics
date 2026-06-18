@@ -1,80 +1,80 @@
-# Configuración e Instalación
+# Setup and Installation
 
-Esta guía te ayudará a poner en marcha el proyecto **DORA Metrics Analyzer** en tu entorno local.
+This guide will help you get the **DORA Metrics Analyzer** project running in your local environment.
 
-## Requisitos Previos
+## Prerequisites
 
-Asegúrate de tener instalados los siguientes componentes:
+Make sure you have the following components installed:
 - **Python 3.8+**
-- **Node.js 18+** y **npm**
-- Una cuenta de GitHub para generar un Personal Access Token.
-- Una cuenta de Google Cloud / Google AI Studio para generar una API Key de Gemini.
+- **Node.js 18+** and **npm**
+- A GitHub account to generate a Personal Access Token.
+- A Google Cloud / Google AI Studio account to generate a Gemini API Key.
 
-## 1. Configuración del Backend
+## 1. Backend Configuration
 
-1. **Clonar el repositorio y navegar a la carpeta del proyecto:**
+1. **Clone the repository and navigate to the project folder:**
    ```bash
-   git clone <url-del-repositorio>
+   git clone <repository-url>
    cd dora-metrics
    ```
 
-2. **Crear y activar un entorno virtual (Recomendado):**
+2. **Create and activate a virtual environment (Recommended):**
    ```bash
    python -m venv venv
-   source venv/bin/activate  # En Linux/Mac
-   # En Windows: .\\venv\\Scripts\\activate
+   source venv/bin/activate  # On Linux/Mac
+   # On Windows: .\\venv\\Scripts\\activate
    ```
 
-3. **Instalar las dependencias de Python:**
+3. **Install the Python dependencies:**
    ```bash
    pip install -r requirements.txt
    ```
 
-4. **Configurar las Variables de Entorno:**
-   Copia el archivo de ejemplo y crea tu propio `.env`:
+4. **Configure Environment Variables:**
+   Copy the example file and create your own `.env`:
    ```bash
    cp .env.example .env
    ```
-   Edita el archivo `.env` y añade tus credenciales:
+   Edit the `.env` file and add your credentials:
    ```env
-   GITHUB_TOKEN=tu_token_de_github_aqui
-   GOOGLE_API_KEY=tu_api_key_de_google_aqui
+   GITHUB_TOKEN=your_github_token_here
+   GOOGLE_API_KEY=your_google_api_key_here
    ```
 
-## 2. Configuración del Frontend
+## 2. Frontend Configuration
 
-1. **Navegar a la carpeta del frontend:**
+1. **Navigate to the frontend folder:**
    ```bash
    cd frontend
    ```
 
-2. **Instalar las dependencias de Node.js:**
+2. **Install Node.js dependencies:**
    ```bash
    npm install
    ```
 
-## 3. Ejecución de la Aplicación
+## 3. Running the Application
 
-Para ejecutar la aplicación completa, necesitas iniciar tanto el servidor backend como el servidor de desarrollo frontend.
+To run the full application, you need to start both the backend server and the frontend development server.
 
-### Iniciar el Backend (Servidor API)
-Abre una terminal en la raíz del proyecto (con el entorno virtual activado) y ejecuta:
+### Start the Backend (API Server)
+Open a terminal in the root of the project (with the virtual environment activated) and run:
 ```bash
 uvicorn backend:app --reload --port 8000
 ```
-El servidor backend estará disponible en `http://localhost:8000`.
+The backend server will be available at `http://localhost:8000`.
 
-### Iniciar el Frontend (Interfaz Web)
-Abre otra terminal, navega a la carpeta `frontend` y ejecuta:
+### Start the Frontend (Web Interface)
+Open another terminal, navigate to the `frontend` folder, and run:
 ```bash
 npm run dev
 ```
-La aplicación web estará disponible, por lo general, en `http://localhost:5173`.
+The web application will be available, usually at `http://localhost:5173`.
 
-## Alternativa: Uso por CLI
+## Alternative: CLI Usage
 
-Si solo deseas realizar pruebas rápidas desde la terminal sin interfaz gráfica, puedes usar el script `main.py` desde la raíz del proyecto:
+If you only want to perform quick tests from the terminal without a graphical interface, you can use the `main.py` script from the project root:
 ```bash
 python main.py
 ```
-Sigue las instrucciones en pantalla para ingresar el nombre del repositorio a analizar.
+Follow the on-screen instructions to enter the repository name to analyze.

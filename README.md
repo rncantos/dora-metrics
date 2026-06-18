@@ -1,59 +1,59 @@
 # DORA Metrics Analyzer
 
-DORA Metrics Analyzer es una herramienta integral (CLI y Web) que permite calcular y analizar las métricas DORA (Deployment Frequency, Lead Time for Changes, Mean Time to Recovery, Change Failure Rate) de repositorios de GitHub. Utiliza Inteligencia Artificial (Google Gemini) junto con LangChain y la API de GitHub para extraer datos, analizarlos y generar informes detallados.
+DORA Metrics Analyzer is a comprehensive tool (CLI and Web) that allows you to calculate and analyze the DORA metrics (Deployment Frequency, Lead Time for Changes, Mean Time to Recovery, Change Failure Rate) of GitHub repositories. It uses Artificial Intelligence (Google Gemini) along with LangChain and the GitHub API to extract data, analyze it, and generate detailed reports.
 
-## Características
+## Features
 
-- **Análisis de Métricas DORA:** Calcula automáticamente las 4 métricas clave de rendimiento de entrega de software.
-- **Inteligencia Artificial Integrada:** Utiliza `gemini-2.5-flash` a través de LangChain para analizar Pull Requests, Releases e Issues.
-- **Interfaz de Línea de Comandos (CLI):** Ejecuta análisis rápidos directamente desde la terminal (`main.py`).
-- **Aplicación Web Completa:** 
-  - Backend con FastAPI que soporta Streaming (SSE) para ver el análisis en tiempo real.
-  - Frontend moderno con React, Vite, TailwindCSS/Vanilla CSS y Recharts para visualizar los datos de forma interactiva.
-- **Historial de Reportes:** Guarda automáticamente los informes en formato JSON y Markdown para su posterior revisión.
+- **DORA Metrics Analysis:** Automatically calculates the 4 key metrics of software delivery performance.
+- **Integrated Artificial Intelligence:** Uses `gemini-2.5-flash` through LangChain to analyze Pull Requests, Releases, and Issues.
+- **Command Line Interface (CLI):** Run quick analyses directly from the terminal (`main.py`).
+- **Complete Web Application:**
+  - Backend with FastAPI that supports Streaming (SSE) to view the analysis in real-time.
+  - Modern frontend with React, Vite, TailwindCSS/Vanilla CSS, and Recharts to visualize data interactively.
+- **Report History:** Automatically saves reports in JSON and Markdown format for later review.
 
-## Estructura del Proyecto
+## Project Structure
 
-El proyecto se divide en las siguientes áreas principales:
+The project is divided into the following main areas:
 
-- `main.py`: Punto de entrada para la CLI.
-- `backend.py`: Servidor FastAPI que expone los endpoints de la API.
-- `dora_metrics/`: Paquete Python que contiene la lógica del agente de LangChain y las herramientas para interactuar con GitHub.
-- `frontend/`: Aplicación SPA (Single Page Application) desarrollada en React + Vite.
-- `reports/`: Directorio donde se almacenan los análisis generados.
-- `docs/`: Documentación detallada del proyecto.
+- `main.py`: Entry point for the CLI.
+- `backend.py`: FastAPI server that exposes the API endpoints.
+- `dora_metrics/`: Python package containing the LangChain agent logic and tools to interact with GitHub.
+- `frontend/`: SPA (Single Page Application) developed in React + Vite.
+- `reports/`: Directory where the generated analyses are stored.
+- `docs/`: Detailed project documentation.
 
-## Documentación
+## Documentation
 
-Para obtener información más detallada, consulta los siguientes documentos en la carpeta `docs/`:
+For more detailed information, check the following documents in the `docs/` folder:
 
-- [Instalación y Configuración (Setup)](docs/setup.md)
-- [Arquitectura del Sistema](docs/architecture.md)
-- [Documentación de la API](docs/api.md)
+- [Setup and Installation](docs/setup.md)
+- [System Architecture](docs/architecture.md)
+- [API Documentation](docs/api.md)
 
-## Requisitos Previos
+## Prerequisites
 
-- Python 3.8 o superior
-- Node.js 18 o superior
-- Un token de acceso personal de GitHub (`GITHUB_TOKEN`)
-- Una clave de API de Google Gemini (`GOOGLE_API_KEY`)
+- Python 3.8 or higher
+- Node.js 18 or higher
+- A GitHub Personal Access Token (`GITHUB_TOKEN`)
+- A Google Gemini API Key (`GOOGLE_API_KEY`)
 
-## Inicio Rápido (CLI)
+## Quick Start (CLI)
 
-1. Clona el repositorio e instala las dependencias de Python:
+1. Clone the repository and install the Python dependencies:
    ```bash
    pip install -r requirements.txt
    ```
-2. Configura tus variables de entorno en un archivo `.env`:
+2. Configure your environment variables in a `.env` file:
    ```env
-   GITHUB_TOKEN=tu_token_de_github
-   GOOGLE_API_KEY=tu_api_key_de_google
+   GITHUB_TOKEN=your_github_token
+   GOOGLE_API_KEY=your_google_api_key
    ```
-3. Ejecuta el análisis desde la terminal:
+3. Run the analysis from the terminal:
    ```bash
    python main.py
    ```
 
-## Licencia
+## License
 
-Este proyecto es de código abierto.
+This project is open-source.
