@@ -219,6 +219,10 @@ export default function App() {
                   <div className="metric-value">{renderValue(executiveData.ltc)}</div>
                 </div>
                 <div className="metric-card">
+                  <div className="metric-title">PR Cycle Time</div>
+                  <div className="metric-value">{renderValue(executiveData.pr_cycle_time)}</div>
+                </div>
+                <div className="metric-card">
                   <div className="metric-title">MTTR</div>
                   <div className="metric-value">{renderValue(executiveData.mttr)}</div>
                 </div>

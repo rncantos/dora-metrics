@@ -258,10 +258,16 @@ button:disabled {
   border-radius: 16px;
   padding: 2rem 1.5rem;
   text-align: center;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  transition: transform 0.3s ease;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s, border-color 0.3s;
   position: relative;
   overflow: hidden;
+}
+
+.metric-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px -10px rgba(168, 85, 247, 0.15);
+  border-color: rgba(168, 85, 247, 0.4);
 }
 
 .metric-card::before {
