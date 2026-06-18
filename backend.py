@@ -1,7 +1,10 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import os
 import warnings
 import datetime
@@ -16,18 +19,23 @@ from dora_metrics.agent import create_dora_agent
 
 load_dotenv()
 
+limiter = Limiter(key_func=get_remote_address)
 app = FastAPI()
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 class AnalyzeRequest(BaseModel):
-    repo_name: str
+    repo_name: str = Field(..., pattern=r"^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$")
 
 @app.get("/api/history")
 def get_history():
@@ -39,12 +47,13 @@ def get_history():
             with open(f, "r") as file:
                 data = json.load(file)
                 history.append(data)
-        except:
-            pass
+        except Exception as e:
+            print(f"Error reading {f}: {e}")
     return history
 
 @app.post("/api/analyze/stream")
-async def analyze_repo_stream(req: AnalyzeRequest):
+@limiter.limit("5/minute")
+async def analyze_repo_stream(req: AnalyzeRequest, request: Request):
     if not os.getenv("GOOGLE_API_KEY") or not os.getenv("GITHUB_TOKEN"):
         raise HTTPException(status_code=500, detail="Missing credentials in .env")
 
@@ -82,8 +91,8 @@ async def analyze_repo_stream(req: AnalyzeRequest):
             try:
                 json_str = parts[1].strip().replace("```json", "").replace("```", "")
                 executive_data = json.loads(json_str)
-            except:
-                pass
+            except Exception as e:
+                print(f"Error parsing JSON: {e}")
                 
         # Save results
         os.makedirs("reports", exist_ok=True)

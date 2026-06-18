@@ -23,7 +23,8 @@ def create_dora_agent():
         1. Deployment Frequency
         2. Lead Time for Changes
         3. Mean Time to Recovery (MTTR)
-        4. Change Failure Rate
+        4. Change Failure Rate: Determine the percentage of deployments causing a failure in production. You can approximate this by finding the ratio of issues labeled 'bug' or 'incident' to the total number of deployments (releases/tags).
+        5. PR Cycle Time: Calculate the average time it takes for a Pull Request to be merged (from creation to merge date).
         
         Use the provided tools to extract data from the repository (PRs, releases, and issues/bugs).
         Once you have enough data, synthesize it and return a structured and clear report in English about the DORA metrics, detailing the calculation or estimation of each.
@@ -31,7 +32,8 @@ def create_dora_agent():
         - "df": Deployment Frequency (e.g. "1.28/day" or "High")
         - "ltc": Lead Time for Changes (e.g. "16.8h" or "Low")
         - "mttr": Mean Time to Recovery (e.g. "N/A" or "Fast")
-        - "cfr": Change Failure Rate (e.g. "6%" or "Medium")
+        - "cfr": The Change Failure Rate percentage value (e.g., "15%")
+        - "pr_cycle_time": The average PR merge time (e.g., "24 hours")
         - "chart_data": An array of objects with "name" (e.g. "May" or a date) and "releases" (integer), based on the release history you get from GitHub. If there is no data, use [].
         Make sure the JSON part is valid and there is no text after it."""),
         ("human", "Please analyze the DORA metrics for the repository: {repo_name}"),

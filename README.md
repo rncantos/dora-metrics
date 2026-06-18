@@ -1,10 +1,12 @@
 # DORA Metrics Analyzer
 
-DORA Metrics Analyzer is a comprehensive tool (CLI and Web) that allows you to calculate and analyze the DORA metrics (Deployment Frequency, Lead Time for Changes, Mean Time to Recovery, Change Failure Rate) of GitHub repositories. It uses Artificial Intelligence (Google Gemini) along with LangChain and the GitHub API to extract data, analyze it, and generate detailed reports.
+DORA Metrics Analyzer is a comprehensive tool (CLI and Web) that allows you to calculate and analyze the DORA metrics (Deployment Frequency, Lead Time for Changes, Mean Time to Recovery, Change Failure Rate) and PR Cycle Time of GitHub repositories. It uses Artificial Intelligence (Google Gemini) along with LangChain and the GitHub API to extract data, analyze it, and generate detailed reports.
 
 ## Features
 
 - **DORA Metrics Analysis:** Automatically calculates the 4 key metrics of software delivery performance.
+- **PR Cycle Time:** Average time from pull request creation to merge.
+- **Change Failure Rate:** Identification of releases that introduced bugs or regressions.
 - **Integrated Artificial Intelligence:** Uses `gemini-2.5-flash` through LangChain to analyze Pull Requests, Releases, and Issues.
 - **Command Line Interface (CLI):** Run quick analyses directly from the terminal (`main.py`).
 - **Complete Web Application:**

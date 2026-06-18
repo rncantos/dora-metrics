@@ -6,8 +6,11 @@ The **DORA Metrics Analyzer** project is designed using a client-server architec
 
 ### 1. Backend (Python / FastAPI)
 The backend acts as the orchestration and service exposure layer.
-- **Framework:** FastAPI. Chosen for its high performance, native support for asynchronous operations, and ease of creating REST APIs.
-- **AI Agent (`dora_metrics.agent`):** Uses LangChain and Google's `gemini-2.5-flash` model. The agent is configured with a specific prompt (DevOps analyst) and has access to "Tools" to make queries to GitHub.
+- **FastAPI**: Serves endpoints, manages SSE streams, and enforces CORS policies.
+- **Pydantic**: Validates inputs with strict regular expressions to prevent injection attacks.
+- **SlowAPI**: Implements robust IP-based rate limiting to prevent abuse.
+- **Agent**: Defined in `dora_metrics/agent.py`, containing the system prompt that directs Gemini.
+- **Tools**: Specialized GitHub functions available to the agent for data retrieval.
 - **GitHub Tools (`dora_metrics.tools.github_tools`):** Functions that use `PyGithub` to extract:
   - Recent Pull Requests.
   - Recent Releases.
