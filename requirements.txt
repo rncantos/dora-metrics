@@ -10,3 +10,5 @@ pytest-asyncio
 httpx
 slowapi
 pytest-cov
+uvicorn
+fastapi
