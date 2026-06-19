@@ -38,8 +38,8 @@ After the report, add the separator "---JSON_START---" and output a valid JSON o
         - "mttr": Mean Time to Recovery (e.g. "N/A" or "Fast")
         - "cfr": Change Failure Rate (e.g. "5%" or "Low")
         - "pr_cycle_time": PR Cycle Time (e.g. "24.5h" or "Medium")
-        - "trend_data": A JSON array of 6 objects representing a 6-month trailing historical trend for PR Cycle Time. Each object must have: {"month": "Jan", "cycle_time": 24}. Base it on real data if available, or generate a realistic trailing estimation that culminates in the current PR Cycle time.
-        - "chart_data": A JSON array of the 5 metrics with numeric 'value' and 'fullMark': [{"subject": "DF", "value": 80, "fullMark": 100}, {"subject": "LTC", "value": 60, "fullMark": 100}, {"subject": "MTTR", "value": 90, "fullMark": 100}, {"subject": "CFR", "value": 70, "fullMark": 100}, {"subject": "PR Cycle", "value": 65, "fullMark": 100}]
+        - "trend_data": A JSON array of 6 objects representing a 6-month trailing historical trend for PR Cycle Time. Each object must have: {{"month": "Jan", "cycle_time": 24}}. Base it on real data if available, or generate a realistic trailing estimation that culminates in the current PR Cycle time.
+        - "chart_data": A JSON array of the 5 metrics with numeric 'value' and 'fullMark': [{{"subject": "DF", "value": 80, "fullMark": 100}}, {{"subject": "LTC", "value": 60, "fullMark": 100}}, {{"subject": "MTTR", "value": 90, "fullMark": 100}}, {{"subject": "CFR", "value": 70, "fullMark": 100}}, {{"subject": "PR Cycle", "value": 65, "fullMark": 100}}]
         Make sure the JSON is perfectly valid. Do not use markdown blocks for the JSON."""),
         ("human", "Please analyze the DORA metrics for the repository: {repo_name}"),
         ("placeholder", "{agent_scratchpad}"),
