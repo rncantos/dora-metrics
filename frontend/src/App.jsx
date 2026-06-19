@@ -13,10 +13,10 @@ export default function App() {
   const [repoName, setRepoName] = useState('langchain-ai/langchain');
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState('');
-  const [executiveData, setExecutiveData] = useState(null);
   const [history, setHistory] = useState([]);
   const [logs, setLogs] = useState([]);
   const [isExporting, setIsExporting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const dashboardRef = useRef(null);
   const pdfRef = useRef(null);
 
@@ -54,7 +54,7 @@ export default function App() {
       image: { type: 'jpeg', quality: 1 },
       html2canvas: { scale: 2, useCORS: true, windowWidth: 700, backgroundColor: '#ffffff' },
       jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
-      pagebreak: { mode: ['css', 'legacy'], avoid: ['.pdf-metric', '.pdf-section-title', 'h1', 'h2', 'h3', 'p', 'li', '.pdf-grid'] }
+      pagebreak: { mode: ['css', 'legacy'], avoid: ['.pdf-metric', '.pdf-section-title', 'h1', 'h2', 'h3', 'p', 'li', '.pdf-grid', '.pdf-charts-grid'] }
     };
     
     html2pdf().from(element).set(opt).toPdf().get('pdf').then(function (pdf) {
@@ -95,12 +95,9 @@ export default function App() {
         pdf.text(`Page ${i} of ${totalPages}`, pageWidth - 0.5, pageHeight - 0.5, { align: 'right' });
       }
     }).save().then(() => {
-      // Hide the template again
       element.style.display = 'none';
       element.style.position = 'absolute';
       element.style.left = '-9999px';
-      
-      // Wait for wow effect exit animation
       setTimeout(() => setIsExporting(false), 1500);
     });
   };
@@ -115,6 +112,7 @@ export default function App() {
   const analyzeRepo = async () => {
     if (!repoName.trim()) return;
     setLoading(true);
+    setShowSuccess(false);
     setReport('');
     setExecutiveData(null);
     setLogs([]);
@@ -131,6 +129,7 @@ export default function App() {
       let done = false;
       let currentReport = "";
       let buffer = "";
+      let hasFinished = false;
 
       while (!done) {
         const { value, done: readerDone } = await reader.read();
@@ -150,9 +149,9 @@ export default function App() {
                 
                 if (data.type === 'tool_start') {
                   const params = Object.keys(data.inputs || {}).length > 0 ? ` [${JSON.stringify(data.inputs)}]` : '';
-                  setLogs(l => [...l, { type: 'tool', text: `⏳ Querying GitHub: ${data.tool}${params}...` }]);
+                  setLogs(l => [...l, { type: 'tool', text: `⏳ System Task: ${data.tool}${params}...` }]);
                 } else if (data.type === 'tool_end') {
-                  setLogs(l => [...l, { type: 'success', text: `✅ Data received from: ${data.tool}` }]);
+                  setLogs(l => [...l, { type: 'success', text: `✅ Component resolved: ${data.tool}` }]);
                 } else if (data.type === 'text') {
                   currentReport += data.content;
                   if (!currentReport.includes('---JSON_START---')) {
@@ -161,12 +160,18 @@ export default function App() {
                     setReport(currentReport.split('---JSON_START---')[0]);
                   }
                 } else if (data.type === 'done') {
+                  hasFinished = true;
                   setExecutiveData(data.result.executive_data);
                   setReport(data.result.report);
-                  setLogs(l => [...l, { type: 'done', text: '🎉 Analysis completed and saved.' }]);
+                  setLogs(l => [...l, { type: 'done', text: '🎉 Neural computation finished.' }]);
                   fetchHistory();
+                  
+                  // Trigger WOW effect
+                  setLoading(false);
+                  setShowSuccess(true);
+                  setTimeout(() => setShowSuccess(false), 3000);
                 } else if (data.type === 'error') {
-                  setLogs(l => [...l, { type: 'error', text: `❌ Error: ${data.content}` }]);
+                  setLogs(l => [...l, { type: 'error', text: `❌ Engine failure: ${data.content}` }]);
                 }
               } catch (parseErr) {
                 console.error("JSON parse error on line:", line, parseErr);
@@ -175,6 +180,21 @@ export default function App() {
           }
         }
       }
+      
+      // Safety catch: if stream closed without 'done' event but we have JSON
+      if (!hasFinished && currentReport.includes('---JSON_START---')) {
+         const jsonStr = currentReport.split('---JSON_START---')[1].trim().replace(/```json/g, '').replace(/```/g, '');
+         try {
+             const parsed = JSON.parse(jsonStr);
+             setExecutiveData(parsed);
+             setReport(currentReport.split('---JSON_START---')[0]);
+             setLogs(l => [...l, { type: 'done', text: '🎉 Neural computation finished.' }]);
+             fetchHistory();
+             setShowSuccess(true);
+             setTimeout(() => setShowSuccess(false), 3000);
+         } catch(e) {}
+      }
+      
     } catch (err) {
       setLogs(l => [...l, { type: 'error', text: `❌ Network failure: ${err.message}` }]);
     } finally {
@@ -211,6 +231,22 @@ export default function App() {
             <div className="pdf-progress-bar">
               <div className="pdf-progress-fill"></div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Efecto WOW: Analysis Success Overlay */}
+      {showSuccess && (
+        <div className="success-overlay">
+          <div className="success-modal">
+            <div className="success-icon-wrapper">
+              <svg className="success-checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                <circle className="success-checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+                <path className="success-checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+              </svg>
+            </div>
+            <h2>Analysis Complete</h2>
+            <p>DORA Metrics have been successfully generated.</p>
           </div>
         </div>
       )}
