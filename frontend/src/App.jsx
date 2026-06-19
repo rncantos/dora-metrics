@@ -43,7 +43,7 @@ export default function App() {
       margin: [1, 0.5, 1, 0.5], // Increased top/bottom margins for injected headers/footers
       filename: `DORA_Executive_Report_${repoName.replace('/', '_')}.pdf`,
       image: { type: 'jpeg', quality: 1 },
-      html2canvas: { scale: 2, useCORS: true, windowWidth: 800, backgroundColor: '#ffffff' },
+      html2canvas: { scale: 2, useCORS: true, windowWidth: 700, backgroundColor: '#ffffff' },
       jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
       pagebreak: { mode: ['css', 'legacy'], avoid: ['.pdf-metric', '.pdf-section-title', 'h1', 'h2', 'h3', 'p', 'li', '.pdf-grid'] }
     };
@@ -53,7 +53,7 @@ export default function App() {
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
       
-      for (let i = 1; i <= totalPages; i++) {
+      for (let i = 2; i <= totalPages; i++) {
         pdf.setPage(i);
         
         // --- HEADER ---
@@ -80,7 +80,7 @@ export default function App() {
         pdf.setFont('helvetica', 'normal');
         pdf.setFontSize(9);
         pdf.setTextColor(100, 116, 139);
-        pdf.text(`Target: ${repoName}  |  Generated: ${new Date().toLocaleDateString()}`, pageWidth - 0.5, 0.65, { align: 'right' });
+        pdf.text(`Target: ${repoName}  |  Generated: ${new Date().toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' })}`, pageWidth - 0.5, 0.65, { align: 'right' });
 
         // --- FOOTER ---
         // Corporate Line at the bottom
@@ -320,6 +320,34 @@ export default function App() {
 
       {/* Hidden Enterprise PDF Template */}
       <div ref={pdfRef} className="pdf-export-container">
+        
+        {/* COVER PAGE WOW EFFECT */}
+        <div className="pdf-cover-page">
+          <div className="pdf-cover-logo">
+            <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
+          </div>
+          <h1 className="pdf-cover-title">EXECUTIVE AUDIT REPORT</h1>
+          <h2 className="pdf-cover-subtitle">DevOps Research and Assessment (DORA) Metrics</h2>
+          <div className="pdf-cover-divider"></div>
+          
+          <div className="pdf-cover-details">
+            <p className="pdf-cover-label">TARGET REPOSITORY</p>
+            <p className="pdf-cover-value">{repoName}</p>
+            
+            <p className="pdf-cover-label">GENERATED AT</p>
+            <p className="pdf-cover-value">{new Date().toLocaleString('en-US', { dateStyle: 'full', timeStyle: 'short' })}</p>
+          </div>
+          
+          <div className="pdf-cover-footer">
+            <p>Strictly Confidential & Proprietary</p>
+            <p>© {new Date().getFullYear()} DORA Metrics AI Enterprise. All rights reserved.</p>
+          </div>
+        </div>
+
+        <div className="pdf-page-break"></div>
+
         <div className="pdf-body">
           {executiveData && (
             <>
