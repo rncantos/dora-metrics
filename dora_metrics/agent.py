@@ -28,16 +28,19 @@ Use the tools provided to fetch pull requests, releases, and issues.
 4. Change Failure Rate: Determine the percentage of deployments causing a failure in production. You can approximate this by finding the ratio of issues labeled 'bug' or 'incident' to the total number of deployments (releases/tags).
 5. PR Cycle Time: Calculate the average time it takes for a Pull Request to be merged (from creation to merge date).
         
-        Use the provided tools to extract data from the repository (PRs, releases, and issues/bugs).
-        Once you have enough data, synthesize it and return a structured and clear report in English about the DORA metrics, detailing the calculation or estimation of each.
-        At the end of your report, add the exact tag '---JSON_START---' followed by a pure JSON object with the following keys:
+Use the provided tools to extract data from the repository (PRs, releases, and issues/bugs).
+Once you have enough data, synthesize it and return a structured and clear report in English about the DORA metrics, detailing the calculation or estimation of each.
+Crucially, you MUST conclude the report with a section titled "## Actionable Insights" containing exactly 3 highly specific, technical, and actionable bullet points on how to improve the repository's weakest metric.
+        
+After the report, add the separator "---JSON_START---" and output a valid JSON object with the following keys:
         - "df": Deployment Frequency (e.g. "1.28/day" or "High")
         - "ltc": Lead Time for Changes (e.g. "16.8h" or "Low")
         - "mttr": Mean Time to Recovery (e.g. "N/A" or "Fast")
-        - "cfr": The Change Failure Rate percentage value (e.g., "15%")
-        - "pr_cycle_time": The average PR merge time (e.g., "24 hours")
-        - "chart_data": An array of objects with "name" (e.g. "May" or a date) and "releases" (integer), based on the release history you get from GitHub. If there is no data, use [].
-        Make sure the JSON part is valid and there is no text after it."""),
+        - "cfr": Change Failure Rate (e.g. "5%" or "Low")
+        - "pr_cycle_time": PR Cycle Time (e.g. "24.5h" or "Medium")
+        - "trend_data": A JSON array of 6 objects representing a 6-month trailing historical trend for PR Cycle Time. Each object must have: {"month": "Jan", "cycle_time": 24}. Base it on real data if available, or generate a realistic trailing estimation that culminates in the current PR Cycle time.
+        - "chart_data": A JSON array of the 5 metrics with numeric 'value' and 'fullMark': [{"subject": "DF", "value": 80, "fullMark": 100}, {"subject": "LTC", "value": 60, "fullMark": 100}, {"subject": "MTTR", "value": 90, "fullMark": 100}, {"subject": "CFR", "value": 70, "fullMark": 100}, {"subject": "PR Cycle", "value": 65, "fullMark": 100}]
+        Make sure the JSON is perfectly valid. Do not use markdown blocks for the JSON."""),
         ("human", "Please analyze the DORA metrics for the repository: {repo_name}"),
         ("placeholder", "{agent_scratchpad}"),
     ])

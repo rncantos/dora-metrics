@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import ReactMarkdownPkg from 'react-markdown';
 import CountUpPkg from 'react-countup';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Download, History, Terminal, Loader2, GitBranch } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
 
@@ -291,22 +291,43 @@ export default function App() {
                 </div>
               </div>
 
-              {executiveData.chart_data && executiveData.chart_data.length > 0 && (
-                <div className="chart-container results-card">
-                  <h3 style={{marginTop:0, color: '#fafafa', fontSize: '1rem', fontWeight: 500}}>Release Trend</h3>
-                  <div style={{ width: '100%', height: 250 }}>
-                    <ResponsiveContainer>
-                      <LineChart data={executiveData.chart_data}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                        <XAxis dataKey="name" stroke="#a1a1aa" tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={false} tickLine={false} />
-                        <YAxis stroke="#a1a1aa" allowDecimals={false} tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={false} tickLine={false} />
-                        <Tooltip contentStyle={{ backgroundColor: '#18181b', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '8px', color: '#fafafa' }} itemStyle={{ color: '#fafafa' }} />
-                        <Line type="monotone" dataKey="releases" stroke="#fafafa" strokeWidth={2} dot={{ r: 4, fill: '#09090b', stroke: '#fafafa', strokeWidth: 2 }} activeDot={{ r: 6, fill: '#fafafa' }} animationDuration={1000} />
-                      </LineChart>
-                    </ResponsiveContainer>
+              <div className="charts-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', marginTop: '2rem', width: '100%' }}>
+                {/* Historical PR Trend */}
+                {executiveData.trend_data && executiveData.trend_data.length > 0 && (
+                  <div className="chart-container results-card">
+                    <h3 style={{marginTop:0, color: '#fafafa', fontSize: '0.85rem', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase'}}>Historical PR Cycle Trend</h3>
+                    <div style={{ width: '100%', height: 250 }}>
+                      <ResponsiveContainer>
+                        <LineChart data={executiveData.trend_data}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                          <XAxis dataKey="month" stroke="#a1a1aa" tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={false} tickLine={false} />
+                          <YAxis stroke="#a1a1aa" allowDecimals={false} tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={false} tickLine={false} />
+                          <Tooltip contentStyle={{ backgroundColor: '#000000', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fafafa' }} itemStyle={{ color: '#fafafa' }} />
+                          <Line type="monotone" dataKey="cycle_time" name="Hours" stroke="#ffffff" strokeWidth={3} dot={{ r: 4, fill: '#000', stroke: '#ffffff', strokeWidth: 2 }} activeDot={{ r: 6, fill: '#ffffff' }} animationDuration={1000} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+
+                {/* DORA Benchmarking */}
+                {executiveData.chart_data && executiveData.chart_data.length > 0 && (
+                  <div className="chart-container results-card">
+                    <h3 style={{marginTop:0, color: '#fafafa', fontSize: '0.85rem', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase'}}>DORA Elite Benchmarking Score</h3>
+                    <div style={{ width: '100%', height: 250 }}>
+                      <ResponsiveContainer>
+                        <BarChart data={executiveData.chart_data} layout="vertical" margin={{ top: 0, right: 30, left: 20, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={true} vertical={false} />
+                          <XAxis type="number" domain={[0, 100]} stroke="#a1a1aa" tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={false} tickLine={false} />
+                          <YAxis dataKey="subject" type="category" stroke="#a1a1aa" tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={false} tickLine={false} width={80} />
+                          <Tooltip contentStyle={{ backgroundColor: '#000000', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fafafa' }} itemStyle={{ color: '#fafafa' }} />
+                          <Bar dataKey="value" name="Score %" fill="#ffffff" radius={[0, 4, 4, 0]} barSize={20} animationDuration={1000} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
+              </div>
             </>
           )}
 
