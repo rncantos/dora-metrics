@@ -13,6 +13,7 @@ export default function App() {
   const [repoName, setRepoName] = useState('langchain-ai/langchain');
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState('');
+  const [executiveData, setExecutiveData] = useState(null);
   const [history, setHistory] = useState([]);
   const [logs, setLogs] = useState([]);
   const [isExporting, setIsExporting] = useState(false);
