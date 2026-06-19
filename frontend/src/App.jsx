@@ -395,6 +395,41 @@ export default function App() {
                   <div className="pdf-metric-value">{executiveData.cfr}</div>
                 </div>
               </div>
+
+              {/* PDF Charts Grid */}
+              <div className="pdf-charts-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', marginTop: '1rem', width: '100%', pageBreakInside: 'avoid' }}>
+                {executiveData.trend_data && executiveData.trend_data.length > 0 && (
+                  <div className="pdf-chart-container" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '1rem' }}>
+                    <h3 style={{marginTop:0, color: '#0f172a', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase'}}>Historical PR Cycle Trend</h3>
+                    <div style={{ width: '100%', height: 200 }}>
+                      <ResponsiveContainer>
+                        <LineChart data={executiveData.trend_data}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                          <XAxis dataKey="month" stroke="#64748b" tick={{fill: '#64748b', fontSize: 10}} axisLine={false} tickLine={false} />
+                          <YAxis stroke="#64748b" allowDecimals={false} tick={{fill: '#64748b', fontSize: 10}} axisLine={false} tickLine={false} />
+                          <Line type="monotone" dataKey="cycle_time" name="Hours" stroke="#2563eb" strokeWidth={2} dot={{ r: 3, fill: '#ffffff', stroke: '#2563eb', strokeWidth: 2 }} isAnimationActive={false} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
+
+                {executiveData.chart_data && executiveData.chart_data.length > 0 && (
+                  <div className="pdf-chart-container" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '1rem' }}>
+                    <h3 style={{marginTop:0, color: '#0f172a', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase'}}>DORA Elite Benchmarking Score</h3>
+                    <div style={{ width: '100%', height: 200 }}>
+                      <ResponsiveContainer>
+                        <BarChart data={executiveData.chart_data} layout="vertical" margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={true} vertical={false} />
+                          <XAxis type="number" domain={[0, 100]} stroke="#64748b" tick={{fill: '#64748b', fontSize: 10}} axisLine={false} tickLine={false} />
+                          <YAxis dataKey="subject" type="category" stroke="#64748b" tick={{fill: '#64748b', fontSize: 10}} axisLine={false} tickLine={false} width={60} />
+                          <Bar dataKey="value" name="Score %" fill="#2563eb" radius={[0, 4, 4, 0]} barSize={16} isAnimationActive={false} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
+              </div>
             </>
           )}
 
