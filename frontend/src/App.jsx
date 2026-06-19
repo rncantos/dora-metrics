@@ -16,6 +16,7 @@ export default function App() {
   const [executiveData, setExecutiveData] = useState(null);
   const [history, setHistory] = useState([]);
   const [logs, setLogs] = useState([]);
+  const [isExporting, setIsExporting] = useState(false);
   const dashboardRef = useRef(null);
   const pdfRef = useRef(null);
 
@@ -33,14 +34,22 @@ export default function App() {
     }
   };
 
-  const exportPDF = () => {
+  const exportPDF = async () => {
+    setIsExporting(true);
     const element = pdfRef.current;
     
-    element.style.position = 'relative';
+    // Give React time to render the overlay before freezing the thread
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    // Make visible but hidden under the overlay
+    element.style.display = 'block';
+    element.style.position = 'absolute';
+    element.style.top = '0';
     element.style.left = '0';
+    element.style.zIndex = '9998'; // Overlay is 9999
     
     const opt = {
-      margin: [1, 0.5, 1, 0.5], // Increased top/bottom margins for injected headers/footers
+      margin: [1, 0.5, 1, 0.5],
       filename: `DORA_Executive_Report_${repoName.replace('/', '_')}.pdf`,
       image: { type: 'jpeg', quality: 1 },
       html2canvas: { scale: 2, useCORS: true, windowWidth: 700, backgroundColor: '#ffffff' },
@@ -55,46 +64,44 @@ export default function App() {
       
       for (let i = 2; i <= totalPages; i++) {
         pdf.setPage(i);
-        
-        // --- HEADER ---
-        // Corporate Blue Line at the top
-        pdf.setDrawColor(15, 23, 42); // #0f172a
+        pdf.setDrawColor(15, 23, 42);
         pdf.setLineWidth(0.02);
         pdf.line(0.5, 0.8, pageWidth - 0.5, 0.8);
         
-        // Logo Text
         pdf.setFont('helvetica', 'bold');
         pdf.setFontSize(16);
-        pdf.setTextColor(37, 99, 235); // #2563eb
+        pdf.setTextColor(37, 99, 235);
         pdf.text('DORA', 0.5, 0.65);
         pdf.setFont('helvetica', 'normal');
         pdf.setFontSize(10);
-        pdf.setTextColor(100, 116, 139); // #64748b
+        pdf.setTextColor(100, 116, 139);
         pdf.text('METRICS AI', 1.25, 0.65);
         
-        // Meta Data Right
         pdf.setFont('helvetica', 'bold');
         pdf.setFontSize(12);
-        pdf.setTextColor(15, 23, 42); // #0f172a
+        pdf.setTextColor(15, 23, 42);
         pdf.text('Executive Audit Report', pageWidth - 0.5, 0.5, { align: 'right' });
         pdf.setFont('helvetica', 'normal');
         pdf.setFontSize(9);
         pdf.setTextColor(100, 116, 139);
         pdf.text(`Target: ${repoName}  |  Generated: ${new Date().toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' })}`, pageWidth - 0.5, 0.65, { align: 'right' });
 
-        // --- FOOTER ---
-        // Corporate Line at the bottom
-        pdf.setDrawColor(226, 232, 240); // #e2e8f0
+        pdf.setDrawColor(226, 232, 240);
         pdf.line(0.5, pageHeight - 0.7, pageWidth - 0.5, pageHeight - 0.7);
         
         pdf.setFontSize(8);
-        pdf.setTextColor(148, 163, 184); // #94a3b8
+        pdf.setTextColor(148, 163, 184);
         pdf.text(`© ${new Date().getFullYear()} DORA Metrics AI. All rights reserved. Highly Confidential Document.`, 0.5, pageHeight - 0.5);
         pdf.text(`Page ${i} of ${totalPages}`, pageWidth - 0.5, pageHeight - 0.5, { align: 'right' });
       }
     }).save().then(() => {
+      // Hide the template again
+      element.style.display = 'none';
       element.style.position = 'absolute';
       element.style.left = '-9999px';
+      
+      // Wait for wow effect exit animation
+      setTimeout(() => setIsExporting(false), 1500);
     });
   };
 
@@ -194,6 +201,20 @@ export default function App() {
 
   return (
     <div className="app-layout">
+      {/* Efecto WOW: PDF Exporting Overlay */}
+      {isExporting && (
+        <div className="pdf-export-overlay">
+          <div className="pdf-export-modal">
+            <Loader2 className="spin pdf-spinner" size={48} />
+            <h2>Compiling Enterprise Document</h2>
+            <p>Rendering vector charts and formatting executive report...</p>
+            <div className="pdf-progress-bar">
+              <div className="pdf-progress-fill"></div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Sidebar Historial */}
       <aside className="sidebar">
         <div className="sidebar-header">
@@ -206,7 +227,7 @@ export default function App() {
               <GitBranch size={16} />
               <div className="hist-details">
                 <span className="hist-repo">{item.repo_name}</span>
-                <span className="hist-date">{item.timestamp.replace(/(\\d{4})(\\d{2})(\\d{2})_(\\d{2})(\\d{2})/, '$3/$2/$1 $4:$5')}</span>
+                <span className="hist-date">{item.timestamp.replace(/(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})/, '$3/$2/$1 $4:$5')}</span>
               </div>
             </div>
           ))}
