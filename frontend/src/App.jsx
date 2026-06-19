@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import ReactMarkdownPkg from 'react-markdown';
 import CountUpPkg from 'react-countup';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Download, History, Terminal, Loader2, GitBranch } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
 
@@ -16,6 +16,8 @@ export default function App() {
   const [executiveData, setExecutiveData] = useState(null);
   const [history, setHistory] = useState([]);
   const [logs, setLogs] = useState([]);
+  const [isExporting, setIsExporting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const dashboardRef = useRef(null);
   const pdfRef = useRef(null);
 
@@ -33,19 +35,27 @@ export default function App() {
     }
   };
 
-  const exportPDF = () => {
+  const exportPDF = async () => {
+    setIsExporting(true);
     const element = pdfRef.current;
     
-    element.style.position = 'relative';
+    // Give React time to render the overlay before freezing the thread
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    // Make visible but hidden under the overlay
+    element.style.display = 'block';
+    element.style.position = 'absolute';
+    element.style.top = '0';
     element.style.left = '0';
+    element.style.zIndex = '9998'; // Overlay is 9999
     
     const opt = {
-      margin: [1, 0.5, 1, 0.5], // Increased top/bottom margins for injected headers/footers
+      margin: [1, 0.5, 1, 0.5],
       filename: `DORA_Executive_Report_${repoName.replace('/', '_')}.pdf`,
       image: { type: 'jpeg', quality: 1 },
       html2canvas: { scale: 2, useCORS: true, windowWidth: 700, backgroundColor: '#ffffff' },
       jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
-      pagebreak: { mode: ['css', 'legacy'], avoid: ['.pdf-metric', '.pdf-section-title', 'h1', 'h2', 'h3', 'p', 'li', '.pdf-grid'] }
+      pagebreak: { mode: ['css', 'legacy'], avoid: ['.pdf-metric', '.pdf-section-title', 'h1', 'h2', 'h3', 'p', 'li', '.pdf-grid', '.pdf-charts-grid'] }
     };
     
     html2pdf().from(element).set(opt).toPdf().get('pdf').then(function (pdf) {
@@ -55,46 +65,41 @@ export default function App() {
       
       for (let i = 2; i <= totalPages; i++) {
         pdf.setPage(i);
-        
-        // --- HEADER ---
-        // Corporate Blue Line at the top
-        pdf.setDrawColor(15, 23, 42); // #0f172a
+        pdf.setDrawColor(15, 23, 42);
         pdf.setLineWidth(0.02);
         pdf.line(0.5, 0.8, pageWidth - 0.5, 0.8);
         
-        // Logo Text
         pdf.setFont('helvetica', 'bold');
         pdf.setFontSize(16);
-        pdf.setTextColor(37, 99, 235); // #2563eb
+        pdf.setTextColor(37, 99, 235);
         pdf.text('DORA', 0.5, 0.65);
         pdf.setFont('helvetica', 'normal');
         pdf.setFontSize(10);
-        pdf.setTextColor(100, 116, 139); // #64748b
+        pdf.setTextColor(100, 116, 139);
         pdf.text('METRICS AI', 1.25, 0.65);
         
-        // Meta Data Right
         pdf.setFont('helvetica', 'bold');
         pdf.setFontSize(12);
-        pdf.setTextColor(15, 23, 42); // #0f172a
+        pdf.setTextColor(15, 23, 42);
         pdf.text('Executive Audit Report', pageWidth - 0.5, 0.5, { align: 'right' });
         pdf.setFont('helvetica', 'normal');
         pdf.setFontSize(9);
         pdf.setTextColor(100, 116, 139);
         pdf.text(`Target: ${repoName}  |  Generated: ${new Date().toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' })}`, pageWidth - 0.5, 0.65, { align: 'right' });
 
-        // --- FOOTER ---
-        // Corporate Line at the bottom
-        pdf.setDrawColor(226, 232, 240); // #e2e8f0
+        pdf.setDrawColor(226, 232, 240);
         pdf.line(0.5, pageHeight - 0.7, pageWidth - 0.5, pageHeight - 0.7);
         
         pdf.setFontSize(8);
-        pdf.setTextColor(148, 163, 184); // #94a3b8
+        pdf.setTextColor(148, 163, 184);
         pdf.text(`© ${new Date().getFullYear()} DORA Metrics AI. All rights reserved. Highly Confidential Document.`, 0.5, pageHeight - 0.5);
         pdf.text(`Page ${i} of ${totalPages}`, pageWidth - 0.5, pageHeight - 0.5, { align: 'right' });
       }
     }).save().then(() => {
+      element.style.display = 'none';
       element.style.position = 'absolute';
       element.style.left = '-9999px';
+      setTimeout(() => setIsExporting(false), 1500);
     });
   };
 
@@ -108,6 +113,7 @@ export default function App() {
   const analyzeRepo = async () => {
     if (!repoName.trim()) return;
     setLoading(true);
+    setShowSuccess(false);
     setReport('');
     setExecutiveData(null);
     setLogs([]);
@@ -124,6 +130,7 @@ export default function App() {
       let done = false;
       let currentReport = "";
       let buffer = "";
+      let hasFinished = false;
 
       while (!done) {
         const { value, done: readerDone } = await reader.read();
@@ -143,9 +150,9 @@ export default function App() {
                 
                 if (data.type === 'tool_start') {
                   const params = Object.keys(data.inputs || {}).length > 0 ? ` [${JSON.stringify(data.inputs)}]` : '';
-                  setLogs(l => [...l, { type: 'tool', text: `⏳ Querying GitHub: ${data.tool}${params}...` }]);
+                  setLogs(l => [...l, { type: 'tool', text: `⏳ System Task: ${data.tool}${params}...` }]);
                 } else if (data.type === 'tool_end') {
-                  setLogs(l => [...l, { type: 'success', text: `✅ Data received from: ${data.tool}` }]);
+                  setLogs(l => [...l, { type: 'success', text: `✅ Component resolved: ${data.tool}` }]);
                 } else if (data.type === 'text') {
                   currentReport += data.content;
                   if (!currentReport.includes('---JSON_START---')) {
@@ -154,12 +161,18 @@ export default function App() {
                     setReport(currentReport.split('---JSON_START---')[0]);
                   }
                 } else if (data.type === 'done') {
+                  hasFinished = true;
                   setExecutiveData(data.result.executive_data);
                   setReport(data.result.report);
-                  setLogs(l => [...l, { type: 'done', text: '🎉 Analysis completed and saved.' }]);
+                  setLogs(l => [...l, { type: 'done', text: '🎉 Neural computation finished.' }]);
                   fetchHistory();
+                  
+                  // Trigger WOW effect
+                  setLoading(false);
+                  setShowSuccess(true);
+                  setTimeout(() => setShowSuccess(false), 3000);
                 } else if (data.type === 'error') {
-                  setLogs(l => [...l, { type: 'error', text: `❌ Error: ${data.content}` }]);
+                  setLogs(l => [...l, { type: 'error', text: `❌ Engine failure: ${data.content}` }]);
                 }
               } catch (parseErr) {
                 console.error("JSON parse error on line:", line, parseErr);
@@ -168,6 +181,23 @@ export default function App() {
           }
         }
       }
+      
+      // Safety catch: if stream closed without 'done' event but we have JSON
+      if (!hasFinished && currentReport.includes('---JSON_START---')) {
+         const jsonStr = currentReport.split('---JSON_START---')[1].trim().replace(/```json/g, '').replace(/```/g, '');
+         try {
+             const parsed = JSON.parse(jsonStr);
+             setExecutiveData(parsed);
+             setReport(currentReport.split('---JSON_START---')[0]);
+             setLogs(l => [...l, { type: 'done', text: '🎉 Neural computation finished.' }]);
+             fetchHistory();
+             setShowSuccess(true);
+             setTimeout(() => setShowSuccess(false), 3000);
+         } catch (e) {
+           console.error('Failed to parse executive data:', e);
+         }
+      }
+      
     } catch (err) {
       setLogs(l => [...l, { type: 'error', text: `❌ Network failure: ${err.message}` }]);
     } finally {
@@ -194,6 +224,36 @@ export default function App() {
 
   return (
     <div className="app-layout">
+      {/* Efecto WOW: PDF Exporting Overlay */}
+      {isExporting && (
+        <div className="pdf-export-overlay">
+          <div className="pdf-export-modal">
+            <Loader2 className="spin pdf-spinner" size={48} />
+            <h2>Compiling Enterprise Document</h2>
+            <p>Rendering vector charts and formatting executive report...</p>
+            <div className="pdf-progress-bar">
+              <div className="pdf-progress-fill"></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Efecto WOW: Analysis Success Overlay */}
+      {showSuccess && (
+        <div className="success-overlay">
+          <div className="success-modal">
+            <div className="success-icon-wrapper">
+              <svg className="success-checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                <circle className="success-checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+                <path className="success-checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+              </svg>
+            </div>
+            <h2>Analysis Complete</h2>
+            <p>DORA Metrics have been successfully generated.</p>
+          </div>
+        </div>
+      )}
+
       {/* Sidebar Historial */}
       <aside className="sidebar">
         <div className="sidebar-header">
@@ -206,7 +266,7 @@ export default function App() {
               <GitBranch size={16} />
               <div className="hist-details">
                 <span className="hist-repo">{item.repo_name}</span>
-                <span className="hist-date">{item.timestamp.replace(/(\\d{4})(\\d{2})(\\d{2})_(\\d{2})(\\d{2})/, '$3/$2/$1 $4:$5')}</span>
+                <span className="hist-date">{item.timestamp.replace(/(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})/, '$3/$2/$1 $4:$5')}</span>
               </div>
             </div>
           ))}
@@ -291,22 +351,43 @@ export default function App() {
                 </div>
               </div>
 
-              {executiveData.chart_data && executiveData.chart_data.length > 0 && (
-                <div className="chart-container results-card">
-                  <h3 style={{marginTop:0, color: '#fafafa', fontSize: '1rem', fontWeight: 500}}>Release Trend</h3>
-                  <div style={{ width: '100%', height: 250 }}>
-                    <ResponsiveContainer>
-                      <LineChart data={executiveData.chart_data}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                        <XAxis dataKey="name" stroke="#a1a1aa" tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={false} tickLine={false} />
-                        <YAxis stroke="#a1a1aa" allowDecimals={false} tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={false} tickLine={false} />
-                        <Tooltip contentStyle={{ backgroundColor: '#18181b', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '8px', color: '#fafafa' }} itemStyle={{ color: '#fafafa' }} />
-                        <Line type="monotone" dataKey="releases" stroke="#fafafa" strokeWidth={2} dot={{ r: 4, fill: '#09090b', stroke: '#fafafa', strokeWidth: 2 }} activeDot={{ r: 6, fill: '#fafafa' }} animationDuration={1000} />
-                      </LineChart>
-                    </ResponsiveContainer>
+              <div className="charts-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', marginTop: '2rem', width: '100%' }}>
+                {/* Historical PR Trend */}
+                {executiveData.trend_data && executiveData.trend_data.length > 0 && (
+                  <div className="chart-container results-card">
+                    <h3 style={{marginTop:0, color: '#fafafa', fontSize: '0.85rem', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase'}}>Historical PR Cycle Trend</h3>
+                    <div style={{ width: '100%', height: 250 }}>
+                      <ResponsiveContainer>
+                        <LineChart data={executiveData.trend_data}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                          <XAxis dataKey="month" stroke="#a1a1aa" tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={false} tickLine={false} />
+                          <YAxis stroke="#a1a1aa" allowDecimals={false} tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={false} tickLine={false} />
+                          <Tooltip contentStyle={{ backgroundColor: '#000000', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fafafa' }} itemStyle={{ color: '#fafafa' }} />
+                          <Line type="monotone" dataKey="cycle_time" name="Hours" stroke="#ffffff" strokeWidth={3} dot={{ r: 4, fill: '#000', stroke: '#ffffff', strokeWidth: 2 }} activeDot={{ r: 6, fill: '#ffffff' }} animationDuration={1000} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+
+                {/* DORA Benchmarking */}
+                {executiveData.chart_data && executiveData.chart_data.length > 0 && (
+                  <div className="chart-container results-card">
+                    <h3 style={{marginTop:0, color: '#fafafa', fontSize: '0.85rem', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase'}}>DORA Elite Benchmarking Score</h3>
+                    <div style={{ width: '100%', height: 250 }}>
+                      <ResponsiveContainer>
+                        <BarChart data={executiveData.chart_data} layout="vertical" margin={{ top: 0, right: 30, left: 20, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={true} vertical={false} />
+                          <XAxis type="number" domain={[0, 100]} stroke="#a1a1aa" tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={false} tickLine={false} />
+                          <YAxis dataKey="subject" type="category" stroke="#a1a1aa" tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={false} tickLine={false} width={80} />
+                          <Tooltip contentStyle={{ backgroundColor: '#000000', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: '#fafafa' }} itemStyle={{ color: '#fafafa' }} />
+                          <Bar dataKey="value" name="Score %" fill="#ffffff" radius={[0, 4, 4, 0]} barSize={20} animationDuration={1000} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
+              </div>
             </>
           )}
 
@@ -373,6 +454,41 @@ export default function App() {
                   <div className="pdf-metric-title">Change Failure Rate</div>
                   <div className="pdf-metric-value">{executiveData.cfr}</div>
                 </div>
+              </div>
+
+              {/* PDF Charts Grid */}
+              <div className="pdf-charts-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', marginTop: '1rem', width: '100%', pageBreakInside: 'avoid' }}>
+                {executiveData.trend_data && executiveData.trend_data.length > 0 && (
+                  <div className="pdf-chart-container" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '1rem' }}>
+                    <h3 style={{marginTop:0, color: '#0f172a', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase'}}>Historical PR Cycle Trend</h3>
+                    <div style={{ width: '100%', height: 200 }}>
+                      <ResponsiveContainer>
+                        <LineChart data={executiveData.trend_data}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                          <XAxis dataKey="month" stroke="#64748b" tick={{fill: '#64748b', fontSize: 10}} axisLine={false} tickLine={false} />
+                          <YAxis stroke="#64748b" allowDecimals={false} tick={{fill: '#64748b', fontSize: 10}} axisLine={false} tickLine={false} />
+                          <Line type="monotone" dataKey="cycle_time" name="Hours" stroke="#2563eb" strokeWidth={2} dot={{ r: 3, fill: '#ffffff', stroke: '#2563eb', strokeWidth: 2 }} isAnimationActive={false} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
+
+                {executiveData.chart_data && executiveData.chart_data.length > 0 && (
+                  <div className="pdf-chart-container" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '1rem' }}>
+                    <h3 style={{marginTop:0, color: '#0f172a', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase'}}>DORA Elite Benchmarking Score</h3>
+                    <div style={{ width: '100%', height: 200 }}>
+                      <ResponsiveContainer>
+                        <BarChart data={executiveData.chart_data} layout="vertical" margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={true} vertical={false} />
+                          <XAxis type="number" domain={[0, 100]} stroke="#64748b" tick={{fill: '#64748b', fontSize: 10}} axisLine={false} tickLine={false} />
+                          <YAxis dataKey="subject" type="category" stroke="#64748b" tick={{fill: '#64748b', fontSize: 10}} axisLine={false} tickLine={false} width={60} />
+                          <Bar dataKey="value" name="Score %" fill="#2563eb" radius={[0, 4, 4, 0]} barSize={16} isAnimationActive={false} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
               </div>
             </>
           )}

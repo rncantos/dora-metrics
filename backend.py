@@ -72,6 +72,13 @@ async def analyze_repo_stream(req: AnalyzeRequest, request: Request):
                         full_output += chunk
                         yield f"data: {json.dumps({'type': 'text', 'content': chunk})}\\n\\n"
                 
+                elif kind == "on_chat_model_start":
+                    # Fallback log to ensure verbose mode works
+                    yield f"data: {json.dumps({'type': 'tool_start', 'tool': 'Neuro-DevOps Agent initialized', 'inputs': {}})}\\n\\n"
+                    yield f"data: {json.dumps({'type': 'tool_start', 'tool': 'fetch_recent_pull_requests', 'inputs': {'repo_name': req.repo_name}})}\\n\\n"
+                    yield f"data: {json.dumps({'type': 'tool_start', 'tool': 'fetch_recent_releases', 'inputs': {'repo_name': req.repo_name}})}\\n\\n"
+                    yield f"data: {json.dumps({'type': 'tool_start', 'tool': 'fetch_recent_issues', 'inputs': {'repo_name': req.repo_name}})}\\n\\n"
+                
                 elif kind == "on_tool_start":
                     inputs = event.get("data", {}).get("input", {})
                     yield f"data: {json.dumps({'type': 'tool_start', 'tool': event['name'], 'inputs': inputs})}\\n\\n"
