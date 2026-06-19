@@ -4,15 +4,16 @@ DORA Metrics Analyzer is a comprehensive tool (CLI and Web) that allows you to c
 
 ## Features
 
+- **Enterprise PDF Export:** Generates highly corporate, vectorized PDF reports with standard commercial formatting (Cover pages, recurring headers/footers, justified typography).
 - **DORA Metrics Analysis:** Automatically calculates the 4 key metrics of software delivery performance.
 - **PR Cycle Time:** Average time from pull request creation to merge.
 - **Change Failure Rate:** Identification of releases that introduced bugs or regressions.
-- **Integrated Artificial Intelligence:** Uses `gemini-2.5-flash` through LangChain to analyze Pull Requests, Releases, and Issues.
-- **Command Line Interface (CLI):** Run quick analyses directly from the terminal (`main.py`).
+- **Integrated Artificial Intelligence:** Uses `gemini-2.5-flash` through LangChain to analyze Pull Requests, Releases, and Issues in strictly enforced English.
 - **Complete Web Application:**
   - Backend with FastAPI that supports Streaming (SSE) to view the analysis in real-time.
-  - Modern frontend with React, Vite, TailwindCSS/Vanilla CSS, and Recharts to visualize data interactively.
-- **Report History:** Automatically saves reports in JSON and Markdown format for later review.
+  - Modern, minimalist, and dynamic frontend designed for a "WOW effect" using React, Vite, and Recharts.
+- **Enterprise Security:** Implements robust CORS, SlowAPI Rate Limiting, Pydantic input validations, and Bandit SAST checking.
+- **CI/CD & Versioning:** Fully automated CI via GitHub Actions (Node 24) and automated Semantic Versioning via `release-please`.
 
 ## Project Structure
 
