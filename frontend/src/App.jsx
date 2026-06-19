@@ -193,7 +193,9 @@ export default function App() {
              fetchHistory();
              setShowSuccess(true);
              setTimeout(() => setShowSuccess(false), 3000);
-         } catch(e) {}
+         } catch (e) {
+           console.error('Failed to parse executive data:', e);
+         }
       }
       
     } catch (err) {
