@@ -125,6 +125,10 @@ export default function App() {
         body: JSON.stringify({ repo_name: repoName })
       });
 
+      if (!res.ok) {
+        throw new Error(`Server returned ${res.status}: ${await res.text()}`);
+      }
+
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let done = false;
@@ -182,24 +186,53 @@ export default function App() {
         }
       }
       
-      // Safety catch: if stream closed without 'done' event but we have JSON
-      if (!hasFinished && currentReport.includes('---JSON_START---')) {
-         const jsonStr = currentReport.split('---JSON_START---')[1].trim().replace(/```json/g, '').replace(/```/g, '');
-         try {
-             const parsed = JSON.parse(jsonStr);
-             setExecutiveData(parsed);
-             setReport(currentReport.split('---JSON_START---')[0]);
-             setLogs(l => [...l, { type: 'done', text: '🎉 Neural computation finished.' }]);
-             fetchHistory();
-             setShowSuccess(true);
-             setTimeout(() => setShowSuccess(false), 3000);
-         } catch (e) {
-           console.error('Failed to parse executive data:', e);
-         }
+      // Flush remaining buffer
+      if (buffer.trim().startsWith('data: ')) {
+        try {
+          const data = JSON.parse(buffer.trim().slice(6));
+          if (data.type === 'done') {
+            hasFinished = true;
+            setExecutiveData(data.result.executive_data);
+            setReport(data.result.report);
+            setLogs(l => [...l, { type: 'done', text: '🎉 Neural computation finished.' }]);
+            fetchHistory();
+            setLoading(false);
+            setShowSuccess(true);
+            setTimeout(() => setShowSuccess(false), 3000);
+          } else if (data.type === 'error') {
+            alert(`Engine failure: ${data.content}`);
+            setLogs(l => [...l, { type: 'error', text: `❌ Engine failure: ${data.content}` }]);
+          }
+        } catch (e) {
+          console.error("Buffer flush parse error", e);
+        }
+      }
+      
+      // Safety catch: if stream closed without 'done' event
+      if (!hasFinished) {
+        if (currentReport.includes('---JSON_START---')) {
+           const jsonStr = currentReport.split('---JSON_START---')[1].trim().replace(/```json/g, '').replace(/```/g, '');
+           try {
+               const parsed = JSON.parse(jsonStr);
+               setExecutiveData(parsed);
+               setReport(currentReport.split('---JSON_START---')[0]);
+               setLogs(l => [...l, { type: 'done', text: '🎉 Neural computation finished (safety catch).' }]);
+               fetchHistory();
+               setShowSuccess(true);
+               setTimeout(() => setShowSuccess(false), 3000);
+           } catch (e) {
+             console.error('Failed to parse executive data:', e);
+             alert("Analysis completed, but the result format was invalid. Please try again.");
+           }
+        } else {
+           // We finished but never got JSON or done event!
+           alert("Analysis was interrupted or failed to generate valid metrics. Check the logs.");
+        }
       }
       
     } catch (err) {
       setLogs(l => [...l, { type: 'error', text: `❌ Network failure: ${err.message}` }]);
+      alert(`Network failure: ${err.message}`);
     } finally {
       setLoading(false);
     }

@@ -52,7 +52,7 @@ def get_history():
     return history
 
 @app.post("/api/analyze/stream")
-@limiter.limit("5/minute")
+@limiter.limit("100/minute")
 async def analyze_repo_stream(req: AnalyzeRequest, request: Request):
     if not os.getenv("GOOGLE_API_KEY") or not os.getenv("GITHUB_TOKEN"):
         raise HTTPException(status_code=500, detail="Missing credentials in .env")
@@ -70,25 +70,61 @@ async def analyze_repo_stream(req: AnalyzeRequest, request: Request):
                     chunk = event["data"]["chunk"].content
                     if chunk and isinstance(chunk, str):
                         full_output += chunk
-                        yield f"data: {json.dumps({'type': 'text', 'content': chunk})}\\n\\n"
+                        yield f"data: {json.dumps({'type': 'text', 'content': chunk})}\n\n"
                 
                 elif kind == "on_chat_model_start":
                     # Fallback log to ensure verbose mode works
-                    yield f"data: {json.dumps({'type': 'tool_start', 'tool': 'Neuro-DevOps Agent initialized', 'inputs': {}})}\\n\\n"
-                    yield f"data: {json.dumps({'type': 'tool_start', 'tool': 'fetch_recent_pull_requests', 'inputs': {'repo_name': req.repo_name}})}\\n\\n"
-                    yield f"data: {json.dumps({'type': 'tool_start', 'tool': 'fetch_recent_releases', 'inputs': {'repo_name': req.repo_name}})}\\n\\n"
-                    yield f"data: {json.dumps({'type': 'tool_start', 'tool': 'fetch_recent_issues', 'inputs': {'repo_name': req.repo_name}})}\\n\\n"
+                    yield f"data: {json.dumps({'type': 'tool_start', 'tool': 'Neuro-DevOps Agent initialized', 'inputs': {}})}\n\n"
+                    yield f"data: {json.dumps({'type': 'tool_start', 'tool': 'fetch_recent_pull_requests', 'inputs': {'repo_name': req.repo_name}})}\n\n"
+                    yield f"data: {json.dumps({'type': 'tool_start', 'tool': 'fetch_recent_releases', 'inputs': {'repo_name': req.repo_name}})}\n\n"
+                    yield f"data: {json.dumps({'type': 'tool_start', 'tool': 'fetch_recent_issues', 'inputs': {'repo_name': req.repo_name}})}\n\n"
                 
                 elif kind == "on_tool_start":
                     inputs = event.get("data", {}).get("input", {})
-                    yield f"data: {json.dumps({'type': 'tool_start', 'tool': event['name'], 'inputs': inputs})}\\n\\n"
+                    yield f"data: {json.dumps({'type': 'tool_start', 'tool': event['name'], 'inputs': inputs})}\n\n"
                     
                 elif kind == "on_tool_end":
-                    yield f"data: {json.dumps({'type': 'tool_end', 'tool': event['name']})}\\n\\n"
+                    yield f"data: {json.dumps({'type': 'tool_end', 'tool': event['name']})}\n\n"
                     
         except Exception as e:
-            yield f"data: {json.dumps({'type': 'error', 'content': str(e)})}\\n\\n"
-            return
+            print(f"STREAMING EXCEPTION: {e}", flush=True)
+            if "429" in str(e) or "ResourceExhausted" in str(e) or "Quota exceeded" in str(e):
+                # Send a warning but fall back to mock data so the user can see the UI
+                yield f"data: {json.dumps({'type': 'error', 'content': 'API Quota Exceeded. Falling back to mock data.'})}\n\n"
+                
+                mock_report = """## DORA Metrics Report (MOCK DATA)
+
+This is a fallback report because the Google AI Studio API rate limit was exceeded.
+
+### 1. Deployment Frequency
+**Metric:** 1.2 deployments/day
+
+### 2. Lead Time for Changes
+**Metric:** 24.5 hours
+
+### 3. Mean Time to Recovery (MTTR)
+**Metric:** 1.5 hours
+
+### 4. Change Failure Rate
+**Metric:** 12%
+
+### 5. PR Cycle Time
+**Metric:** 24.5 hours
+
+## Actionable Insights
+*   **Optimize CI/CD pipeline:** Reduce build times to improve Deployment Frequency.
+*   **Enhance automated testing:** Catch bugs earlier to lower the Change Failure Rate.
+*   **Improve incident response:** Streamline alerting to reduce MTTR.
+
+---JSON_START---
+{"df": "1.2/day", "ltc": "24.5h", "mttr": "1.5h", "cfr": "12%", "pr_cycle_time": "24.5h", "trend_data": [{"month": "Jan", "cycle_time": 45}, {"month": "Feb", "cycle_time": 42}, {"month": "Mar", "cycle_time": 35}, {"month": "Apr", "cycle_time": 30}, {"month": "May", "cycle_time": 28}, {"month": "Jun", "cycle_time": 24.5}], "chart_data": [{"subject": "DF", "value": 85, "fullMark": 100}, {"subject": "LTC", "value": 70, "fullMark": 100}, {"subject": "MTTR", "value": 80, "fullMark": 100}, {"subject": "CFR", "value": 60, "fullMark": 100}, {"subject": "PR Cycle", "value": 75, "fullMark": 100}]}
+"""
+                # Yield the mock report as text
+                yield f"data: {json.dumps({'type': 'text', 'content': mock_report})}\n\n"
+                full_output = mock_report
+            else:
+                yield f"data: {json.dumps({'type': 'error', 'content': str(e)})}\n\n"
+                return
             
         # When finished, process the final JSON
         executive_data = None
@@ -121,6 +157,6 @@ async def analyze_repo_stream(req: AnalyzeRequest, request: Request):
         with open(f"reports/dora_{safe_repo_name}_{timestamp}.md", "w", encoding="utf-8") as f:
             f.write(report_md)
             
-        yield f"data: {json.dumps({'type': 'done', 'result': result_payload})}\\n\\n"
+        yield f"data: {json.dumps({'type': 'done', 'result': result_payload})}\n\n"
         
     return StreamingResponse(generate(), media_type="text/event-stream")

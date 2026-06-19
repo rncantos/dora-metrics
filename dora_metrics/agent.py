@@ -9,7 +9,7 @@ from dora_metrics.tools.github_tools import (
 
 def create_dora_agent():
     # Make sure you have GOOGLE_API_KEY in your environment or .env file
-    llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0)
+    llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0, max_retries=0)
     
     tools = [
         fetch_recent_pull_requests,
