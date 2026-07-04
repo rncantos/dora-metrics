@@ -3,7 +3,8 @@ import ReactMarkdownPkg from 'react-markdown';
 import CountUpPkg from 'react-countup';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Download, History, Terminal, Loader2, GitBranch } from 'lucide-react';
-import html2pdf from 'html2pdf.js';
+import domtoimage from 'dom-to-image-more';
+import { jsPDF } from 'jspdf';
 
 const CountUp = CountUpPkg.default || CountUpPkg;
 const ReactMarkdown = ReactMarkdownPkg.default || ReactMarkdownPkg;
@@ -39,68 +40,112 @@ export default function App() {
     setIsExporting(true);
     const element = pdfRef.current;
     
-    // Give React time to render the overlay before freezing the thread
-    await new Promise(resolve => setTimeout(resolve, 800));
+    // 1. Scroll to the very top so dom-to-image doesn't capture a blank off-screen area.
+    window.scrollTo(0, 0);
     
-    // Make visible but hidden under the overlay
-    element.style.display = 'block';
-    element.style.position = 'absolute';
-    element.style.top = '0';
-    element.style.left = '0';
-    element.style.zIndex = '9998'; // Overlay is 9999
+    // 2. Hide the main app so it doesn't push the layout down
+    const mainContent = document.querySelector('.main-content');
+    const sidebar = document.querySelector('.sidebar');
+    if (mainContent) mainContent.style.display = 'none';
+    if (sidebar) sidebar.style.display = 'none';
     
-    const opt = {
-      margin: [1, 0.5, 1, 0.5],
-      filename: `DORA_Executive_Report_${repoName.replace('/', '_')}.pdf`,
-      image: { type: 'jpeg', quality: 1 },
-      html2canvas: { scale: 2, useCORS: true, windowWidth: 700, backgroundColor: '#ffffff' },
-      jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
-      pagebreak: { mode: ['css', 'legacy'], avoid: ['.pdf-metric', '.pdf-section-title', 'h1', 'h2', 'h3', 'p', 'li', '.pdf-grid', '.pdf-charts-grid'] }
-    };
+    // 3. Move the PDF container into the visible viewport
+    element.classList.add('exporting-active');
     
-    html2pdf().from(element).set(opt).toPdf().get('pdf').then(function (pdf) {
-      const totalPages = pdf.internal.getNumberOfPages();
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
+    try {
+      // Give React/Recharts time to render in the visible viewport
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      for (let i = 2; i <= totalPages; i++) {
-        pdf.setPage(i);
+      const scale = 2;
+      const width = element.offsetWidth;
+      const height = element.offsetHeight;
+      
+      // Use dom-to-image-more which is highly compatible with Safari/Mac and SVGs
+      const dataUrl = await domtoimage.toJpeg(element, {
+        quality: 0.95,
+        bgcolor: '#ffffff',
+        width: width * scale,
+        height: height * scale,
+        style: {
+          transform: `scale(${scale})`,
+          transformOrigin: 'top left',
+          width: `${width}px`,
+          height: `${height}px`
+        }
+      });
+      
+      // Manual A4 Pagination
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      const ratio = width / pdfWidth;
+      const scaledHeight = height / ratio;
+      
+      let heightLeft = scaledHeight;
+      let position = 0;
+      let pageNumber = 1;
+
+      // First Page (Cover)
+      pdf.addImage(dataUrl, 'JPEG', 0, position, pdfWidth, scaledHeight);
+      heightLeft -= pdfHeight;
+      
+      // Subsequent Pages
+      while (heightLeft > 0) {
+        position = position - pdfHeight;
+        pdf.addPage();
+        pdf.addImage(dataUrl, 'JPEG', 0, position, pdfWidth, scaledHeight);
+        
+        pageNumber++;
+        // Add Header block to cover image seam
+        pdf.setFillColor(255, 255, 255);
+        pdf.rect(0, 0, pdfWidth, 24, 'F');
         pdf.setDrawColor(15, 23, 42);
-        pdf.setLineWidth(0.02);
-        pdf.line(0.5, 0.8, pageWidth - 0.5, 0.8);
+        pdf.setLineWidth(0.5);
+        pdf.line(12, 22, pdfWidth - 12, 22);
         
         pdf.setFont('helvetica', 'bold');
         pdf.setFontSize(16);
         pdf.setTextColor(37, 99, 235);
-        pdf.text('DORA', 0.5, 0.65);
+        pdf.text('DORA', 12, 17);
         pdf.setFont('helvetica', 'normal');
         pdf.setFontSize(10);
         pdf.setTextColor(100, 116, 139);
-        pdf.text('METRICS AI', 1.25, 0.65);
+        pdf.text('METRICS AI', 32, 17);
         
         pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(12);
+        pdf.setFontSize(10);
         pdf.setTextColor(15, 23, 42);
-        pdf.text('Executive Audit Report', pageWidth - 0.5, 0.5, { align: 'right' });
+        pdf.text('Executive Audit Report', pdfWidth - 12, 12, { align: 'right' });
         pdf.setFont('helvetica', 'normal');
-        pdf.setFontSize(9);
+        pdf.setFontSize(8);
         pdf.setTextColor(100, 116, 139);
-        pdf.text(`Target: ${repoName}  |  Generated: ${new Date().toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' })}`, pageWidth - 0.5, 0.65, { align: 'right' });
+        pdf.text(`Target: ${repoName}`, pdfWidth - 12, 17, { align: 'right' });
 
+        // Add Footer block
+        pdf.setFillColor(255, 255, 255);
+        pdf.rect(0, pdfHeight - 20, pdfWidth, 20, 'F');
         pdf.setDrawColor(226, 232, 240);
-        pdf.line(0.5, pageHeight - 0.7, pageWidth - 0.5, pageHeight - 0.7);
+        pdf.line(12, pdfHeight - 15, pdfWidth - 12, pdfHeight - 15);
         
         pdf.setFontSize(8);
         pdf.setTextColor(148, 163, 184);
-        pdf.text(`© ${new Date().getFullYear()} DORA Metrics AI. All rights reserved. Highly Confidential Document.`, 0.5, pageHeight - 0.5);
-        pdf.text(`Page ${i} of ${totalPages}`, pageWidth - 0.5, pageHeight - 0.5, { align: 'right' });
+        pdf.text(`© ${new Date().getFullYear()} DORA Metrics AI. Confidential.`, 12, pdfHeight - 8);
+        pdf.text(`Page ${pageNumber}`, pdfWidth - 12, pdfHeight - 8, { align: 'right' });
+
+        heightLeft -= pdfHeight;
       }
-    }).save().then(() => {
-      element.style.display = 'none';
-      element.style.position = 'absolute';
-      element.style.left = '-9999px';
-      setTimeout(() => setIsExporting(false), 1500);
-    });
+      
+      pdf.save(`DORA_Executive_Report_${repoName.replace('/', '_')}.pdf`);
+      
+    } catch (error) {
+      console.error("Failed to export PDF:", error);
+    } finally {
+      element.classList.remove('exporting-active');
+      if (mainContent) mainContent.style.display = 'block';
+      if (sidebar) sidebar.style.display = 'block';
+      setIsExporting(false);
+    }
   };
 
   const loadFromHistory = (item) => {
@@ -240,18 +285,21 @@ export default function App() {
 
   const renderValue = (val) => {
     if (!val || val === 'N/A') return 'N/A';
+    
+    // Check if the value is a string that contains a number and a unit (e.g. "0.69/day")
     const strVal = String(val);
-    const numMatch = strVal.match(/[\\d.]+/);
+    const numMatch = strVal.match(/[\d.]+/);
+    
     if (numMatch && numMatch[0]) {
-      const num = parseFloat(numMatch[0]);
       const text = strVal.replace(numMatch[0], '');
       return (
         <>
-          <CountUp end={num} decimals={strVal.includes('.') ? 2 : 0} duration={2.5} />
+          {numMatch[0]}
           <span className="unit">{text}</span>
         </>
       );
     }
+    
     return strVal;
   };
 
@@ -325,10 +373,18 @@ export default function App() {
           <button onClick={analyzeRepo} disabled={loading} className="btn-primary">
             {loading ? <><Loader2 className="spin" size={18} /> Thinking...</> : '✨ Analyze'}
           </button>
-          <button onClick={exportPDF} disabled={!executiveData} className="btn-secondary">
+          <button onClick={exportPDF} disabled={!executiveData} className={executiveData ? "btn-primary download-pulse" : "btn-secondary"}>
             <Download size={18} /> PDF
           </button>
         </div>
+
+        {/* Persistent Success Badge */}
+        {executiveData && !loading && (
+          <div style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#4ade80', background: 'rgba(74, 222, 128, 0.1)', padding: '0.75rem 1.25rem', borderRadius: '9999px', border: '1px solid rgba(74, 222, 128, 0.2)', fontSize: '0.9rem', fontWeight: 500, boxShadow: '0 4px 20px rgba(74, 222, 128, 0.1)' }}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            Analysis Successfully Completed. You can now download the PDF report.
+          </div>
+        )}
 
         {/* Terminal en vivo */}
         {(logs.length > 0 || loading) && (
@@ -490,9 +546,9 @@ export default function App() {
               </div>
 
               {/* PDF Charts Grid */}
-              <div className="pdf-charts-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', marginTop: '1rem', width: '100%', pageBreakInside: 'avoid' }}>
+              <div className="pdf-charts-grid" style={{ display: 'flex', gap: '1rem', marginTop: '1rem', width: '100%', pageBreakInside: 'avoid' }}>
                 {executiveData.trend_data && executiveData.trend_data.length > 0 && (
-                  <div className="pdf-chart-container" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '1rem' }}>
+                  <div className="pdf-chart-container" style={{ flex: '1 1 0', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '1rem' }}>
                     <h3 style={{marginTop:0, color: '#0f172a', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase'}}>Historical PR Cycle Trend</h3>
                     <div style={{ width: '100%', height: 200 }}>
                       <ResponsiveContainer>
@@ -508,7 +564,7 @@ export default function App() {
                 )}
 
                 {executiveData.chart_data && executiveData.chart_data.length > 0 && (
-                  <div className="pdf-chart-container" style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '1rem' }}>
+                  <div className="pdf-chart-container" style={{ flex: '1 1 0', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '1rem' }}>
                     <h3 style={{marginTop:0, color: '#0f172a', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase'}}>DORA Elite Benchmarking Score</h3>
                     <div style={{ width: '100%', height: 200 }}>
                       <ResponsiveContainer>
