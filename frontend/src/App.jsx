@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import ReactMarkdownPkg from 'react-markdown';
 import CountUpPkg from 'react-countup';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Download, History, Terminal, Loader2, GitBranch } from 'lucide-react';
+import { Download, History, Terminal, Loader2, GitBranch, Moon, Sun } from 'lucide-react';
 import domtoimage from 'dom-to-image-more';
 import { jsPDF } from 'jspdf';
 
@@ -19,8 +19,17 @@ export default function App() {
   const [logs, setLogs] = useState([]);
   const [isExporting, setIsExporting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true);
   const dashboardRef = useRef(null);
   const pdfRef = useRef(null);
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.body.removeAttribute('data-theme');
+    } else {
+      document.body.setAttribute('data-theme', 'light');
+    }
+  }, [isDarkMode]);
 
   useEffect(() => {
     fetchHistory();
@@ -312,6 +321,13 @@ export default function App() {
           </button>
           <button onClick={exportPDF} disabled={!executiveData} className={executiveData ? "btn-primary download-pulse" : "btn-secondary"}>
             <Download size={18} /> PDF
+          </button>
+          <button 
+            className="btn-secondary" 
+            onClick={() => setIsDarkMode(!isDarkMode)}
+            title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          >
+            {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
           </button>
         </div>
 
