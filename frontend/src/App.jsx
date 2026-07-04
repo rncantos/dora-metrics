@@ -40,61 +40,39 @@ export default function App() {
     setIsExporting(true);
     const element = pdfRef.current;
     
-    // 1. Scroll to the very top so dom-to-image doesn't capture a blank off-screen area.
+    // FOOLPROOF MAC/SAFARI FIX:
     window.scrollTo(0, 0);
-    
-    // 2. Hide the main app so it doesn't push the layout down
     const mainContent = document.querySelector('.main-content');
     const sidebar = document.querySelector('.sidebar');
     if (mainContent) mainContent.style.display = 'none';
     if (sidebar) sidebar.style.display = 'none';
     
-    // 3. Move the PDF container into the visible viewport
     element.classList.add('exporting-active');
     
     try {
-      // Give React/Recharts time to render in the visible viewport
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      const pdf = new jsPDF('p', 'px', [800, 1131]); // 1:1.414 A4 ratio in pixels
+      const scale = 2;
+      const width = element.offsetWidth;
+      const height = element.offsetHeight;
       
-      const capturePage = async (pageId) => {
-        const el = document.getElementById(pageId);
-        if (!el) return null;
-        
-        // Force the element to evaluate its height accurately
-        const h = el.offsetHeight;
-        return {
-           img: await domtoimage.toJpeg(el, {
-            quality: 0.98,
-            bgcolor: '#ffffff',
-            width: 800,
-            height: h,
-            style: { margin: 0, padding: 0 } // Neutralize any external spacing
-          }),
-          height: h
-        };
-      };
+      // 1. Capture the DOM natively (Safari SVG compatible)
+      const dataUrl = await domtoimage.toJpeg(element, {
+        quality: 0.98,
+        bgcolor: '#ffffff',
+        width: width * scale,
+        height: height * scale,
+        style: {
+          transform: `scale(${scale})`,
+          transformOrigin: 'top left',
+          width: `${width}px`,
+          height: `${height}px`
+        }
+      });
       
-      // PAGE 1: COVER
-      const page1 = await capturePage('pdf-page-1');
-      if (page1) pdf.addImage(page1.img, 'JPEG', 0, 0, 800, 1131);
-      
-      // PAGE 2: KPIs & CHARTS
-      const page2 = await capturePage('pdf-page-2');
-      if (page2) {
-        pdf.addPage([800, 1131]);
-        pdf.addImage(page2.img, 'JPEG', 0, 0, 800, 1131);
-      }
-      
-      // PAGE 3: DETAILED REPORT
-      const page3 = await capturePage('pdf-page-3');
-      if (page3) {
-        // We use the exact height of the rendered markdown so no text gets cut mid-sentence!
-        pdf.addPage([800, page3.height]);
-        pdf.addImage(page3.img, 'JPEG', 0, 0, 800, page3.height);
-      }
-      
+      // 2. Generate a single continuous PDF page so NO text or charts get cut in half
+      const pdf = new jsPDF('p', 'px', [width, height]);
+      pdf.addImage(dataUrl, 'JPEG', 0, 0, width, height);
       pdf.save(`DORA_Executive_Report_${repoName.replace('/', '_')}.pdf`);
       
     } catch (error) {
@@ -448,17 +426,11 @@ export default function App() {
       </main>
 
       {/* Hidden Enterprise PDF Template */}
-      <div ref={pdfRef} className="pdf-export-container" style={{ width: '800px', background: '#fff' }}>
+      <div ref={pdfRef} className="pdf-export-container">
         
-        {/* PAGE 1: COVER PAGE */}
-        <div id="pdf-page-1" style={{ width: '800px', height: '1131px', position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '40px', boxSizing: 'border-box', backgroundColor: '#ffffff' }}>
-          
-          <div style={{ position: 'absolute', top: '40px', left: '40px', right: '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '2px solid #0f172a', paddingBottom: '10px' }}>
-             <span style={{ fontSize: '20px', fontWeight: '900', color: '#2563eb', letterSpacing: '1px' }}>DORA <span style={{ color: '#64748b', fontWeight: '400' }}>METRICS AI</span></span>
-             <span style={{ fontSize: '13px', color: '#0f172a', fontWeight: '700' }}>Target: {repoName}</span>
-          </div>
-
-          <div className="pdf-cover-logo" style={{ marginTop: 'auto' }}>
+        {/* COVER PAGE WOW EFFECT */}
+        <div className="pdf-cover-page">
+          <div className="pdf-cover-logo">
             <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
             </svg>
@@ -468,110 +440,94 @@ export default function App() {
           <div className="pdf-cover-divider"></div>
           
           <div className="pdf-cover-details">
+            <p className="pdf-cover-label">TARGET REPOSITORY</p>
+            <p className="pdf-cover-value">{repoName}</p>
+            
             <p className="pdf-cover-label">GENERATED AT</p>
             <p className="pdf-cover-value">{new Date().toLocaleString('en-US', { dateStyle: 'full', timeStyle: 'short' })}</p>
           </div>
           
-          <div style={{ position: 'absolute', bottom: '40px', left: '40px', right: '40px', textAlign: 'center', color: '#94a3b8', fontSize: '12px', borderTop: '1px solid #e2e8f0', paddingTop: '20px', marginTop: 'auto' }}>
-            <p style={{ margin: '0 0 5px 0', fontWeight: 'bold' }}>Strictly Confidential & Proprietary</p>
-            <p style={{ margin: 0 }}>© {new Date().getFullYear()} DORA Metrics AI Enterprise. All rights reserved.</p>
+          <div className="pdf-cover-footer">
+            <p>Strictly Confidential & Proprietary</p>
+            <p>© {new Date().getFullYear()} DORA Metrics AI Enterprise. All rights reserved.</p>
           </div>
         </div>
 
-        {/* PAGE 2: KPIs & CHARTS */}
-        {executiveData && (
-          <div id="pdf-page-2" style={{ width: '800px', height: '1131px', position: 'relative', padding: '100px 40px 60px 40px', boxSizing: 'border-box', backgroundColor: '#ffffff' }}>
-            
-            <div style={{ position: 'absolute', top: '40px', left: '40px', right: '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '2px solid #0f172a', paddingBottom: '10px' }}>
-               <span style={{ fontSize: '18px', fontWeight: '900', color: '#2563eb' }}>DORA <span style={{ color: '#64748b', fontWeight: '400' }}>METRICS AI</span></span>
-               <span style={{ fontSize: '12px', color: '#0f172a', fontWeight: '700' }}>Executive Dashboard - Page 2</span>
-            </div>
+        <div className="pdf-page-break"></div>
 
-            <div className="pdf-section-title">Key Performance Indicators</div>
-            <div className="pdf-grid">
-              <div className="pdf-metric">
-                <div className="pdf-metric-title">Deployment Frequency</div>
-                <div className="pdf-metric-value">{executiveData.df}</div>
-              </div>
-              <div className="pdf-metric">
-                <div className="pdf-metric-title">Lead Time for Changes</div>
-                <div className="pdf-metric-value">{executiveData.ltc}</div>
-              </div>
-              <div className="pdf-metric">
-                <div className="pdf-metric-title">PR Cycle Time</div>
-                <div className="pdf-metric-value">{executiveData.pr_cycle_time}</div>
-              </div>
-              <div className="pdf-metric">
-                <div className="pdf-metric-title">Mean Time to Recovery</div>
-                <div className="pdf-metric-value">{executiveData.mttr}</div>
-              </div>
-              <div className="pdf-metric">
-                <div className="pdf-metric-title">Change Failure Rate</div>
-                <div className="pdf-metric-value">{executiveData.cfr}</div>
-              </div>
-            </div>
-
-            <div className="pdf-charts-grid" style={{ display: 'flex', gap: '1rem', marginTop: '1rem', width: '100%', pageBreakInside: 'avoid' }}>
-              {executiveData.trend_data && executiveData.trend_data.length > 0 && (
-                <div className="pdf-chart-container" style={{ flex: '1 1 0', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '1rem' }}>
-                  <h3 style={{marginTop:0, color: '#0f172a', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase'}}>Historical PR Cycle Trend</h3>
-                  <div style={{ width: '100%', height: 250 }}>
-                    <ResponsiveContainer>
-                      <LineChart data={executiveData.trend_data}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                        <XAxis dataKey="month" stroke="#64748b" tick={{fill: '#64748b', fontSize: 10}} axisLine={false} tickLine={false} />
-                        <YAxis stroke="#64748b" allowDecimals={false} tick={{fill: '#64748b', fontSize: 10}} axisLine={false} tickLine={false} />
-                        <Line type="monotone" dataKey="cycle_time" name="Hours" stroke="#2563eb" strokeWidth={2} dot={{ r: 3, fill: '#ffffff', stroke: '#2563eb', strokeWidth: 2 }} isAnimationActive={false} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
+        <div className="pdf-body">
+          {executiveData && (
+            <>
+              <div className="pdf-section-title">Key Performance Indicators</div>
+              <div className="pdf-grid">
+                <div className="pdf-metric">
+                  <div className="pdf-metric-title">Deployment Frequency</div>
+                  <div className="pdf-metric-value">{executiveData.df}</div>
                 </div>
-              )}
-
-              {executiveData.chart_data && executiveData.chart_data.length > 0 && (
-                <div className="pdf-chart-container" style={{ flex: '1 1 0', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '1rem' }}>
-                  <h3 style={{marginTop:0, color: '#0f172a', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase'}}>DORA Elite Benchmarking Score</h3>
-                  <div style={{ width: '100%', height: 250 }}>
-                    <ResponsiveContainer>
-                      <BarChart data={executiveData.chart_data} layout="vertical" margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={true} vertical={false} />
-                        <XAxis type="number" domain={[0, 100]} stroke="#64748b" tick={{fill: '#64748b', fontSize: 10}} axisLine={false} tickLine={false} />
-                        <YAxis dataKey="subject" type="category" stroke="#64748b" tick={{fill: '#64748b', fontSize: 10}} axisLine={false} tickLine={false} width={60} />
-                        <Bar dataKey="value" name="Score %" fill="#2563eb" radius={[0, 4, 4, 0]} barSize={16} isAnimationActive={false} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
+                <div className="pdf-metric">
+                  <div className="pdf-metric-title">Lead Time for Changes</div>
+                  <div className="pdf-metric-value">{executiveData.ltc}</div>
                 </div>
-              )}
-            </div>
-            
-            <div style={{ position: 'absolute', bottom: '40px', left: '40px', right: '40px', display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}>
-              <span style={{ fontSize: '10px', color: '#94a3b8' }}>© {new Date().getFullYear()} DORA Metrics AI. Confidential.</span>
-              <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 'bold' }}>2</span>
-            </div>
-          </div>
-        )}
+                <div className="pdf-metric">
+                  <div className="pdf-metric-title">PR Cycle Time</div>
+                  <div className="pdf-metric-value">{executiveData.pr_cycle_time}</div>
+                </div>
+                <div className="pdf-metric">
+                  <div className="pdf-metric-title">Mean Time to Recovery</div>
+                  <div className="pdf-metric-value">{executiveData.mttr}</div>
+                </div>
+                <div className="pdf-metric">
+                  <div className="pdf-metric-title">Change Failure Rate</div>
+                  <div className="pdf-metric-value">{executiveData.cfr}</div>
+                </div>
+              </div>
 
-        {/* PAGE 3: DETAILED REPORT */}
-        {report && (
-          <div id="pdf-page-3" style={{ width: '800px', minHeight: '1131px', position: 'relative', padding: '100px 40px 80px 40px', boxSizing: 'border-box', backgroundColor: '#ffffff' }}>
-            
-            <div style={{ position: 'absolute', top: '40px', left: '40px', right: '40px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '2px solid #0f172a', paddingBottom: '10px' }}>
-               <span style={{ fontSize: '18px', fontWeight: '900', color: '#2563eb' }}>DORA <span style={{ color: '#64748b', fontWeight: '400' }}>METRICS AI</span></span>
-               <span style={{ fontSize: '12px', color: '#0f172a', fontWeight: '700' }}>Analysis Report - Page 3</span>
-            </div>
+              {/* PDF Charts Grid */}
+              <div className="pdf-charts-grid" style={{ display: 'flex', gap: '1rem', marginTop: '1rem', width: '100%', pageBreakInside: 'avoid' }}>
+                {executiveData.trend_data && executiveData.trend_data.length > 0 && (
+                  <div className="pdf-chart-container" style={{ flex: '1 1 0', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '1rem' }}>
+                    <h3 style={{marginTop:0, color: '#0f172a', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase'}}>Historical PR Cycle Trend</h3>
+                    <div style={{ width: '100%', height: 200 }}>
+                      <ResponsiveContainer>
+                        <LineChart data={executiveData.trend_data}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                          <XAxis dataKey="month" stroke="#64748b" tick={{fill: '#64748b', fontSize: 10}} axisLine={false} tickLine={false} />
+                          <YAxis stroke="#64748b" allowDecimals={false} tick={{fill: '#64748b', fontSize: 10}} axisLine={false} tickLine={false} />
+                          <Line type="monotone" dataKey="cycle_time" name="Hours" stroke="#2563eb" strokeWidth={2} dot={{ r: 3, fill: '#ffffff', stroke: '#2563eb', strokeWidth: 2 }} isAnimationActive={false} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
 
-            <div className="pdf-section-title">Detailed Analysis Report</div>
-            <div className="pdf-report">
-              <ReactMarkdown>{report}</ReactMarkdown>
-            </div>
-            
-            <div style={{ position: 'absolute', bottom: '40px', left: '40px', right: '40px', display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}>
-              <span style={{ fontSize: '10px', color: '#94a3b8' }}>© {new Date().getFullYear()} DORA Metrics AI. Confidential.</span>
-              <span style={{ fontSize: '10px', color: '#94a3b8', fontWeight: 'bold' }}>3</span>
-            </div>
-          </div>
-        )}
+                {executiveData.chart_data && executiveData.chart_data.length > 0 && (
+                  <div className="pdf-chart-container" style={{ flex: '1 1 0', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '1rem' }}>
+                    <h3 style={{marginTop:0, color: '#0f172a', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase'}}>DORA Elite Benchmarking Score</h3>
+                    <div style={{ width: '100%', height: 200 }}>
+                      <ResponsiveContainer>
+                        <BarChart data={executiveData.chart_data} layout="vertical" margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={true} vertical={false} />
+                          <XAxis type="number" domain={[0, 100]} stroke="#64748b" tick={{fill: '#64748b', fontSize: 10}} axisLine={false} tickLine={false} />
+                          <YAxis dataKey="subject" type="category" stroke="#64748b" tick={{fill: '#64748b', fontSize: 10}} axisLine={false} tickLine={false} width={60} />
+                          <Bar dataKey="value" name="Score %" fill="#2563eb" radius={[0, 4, 4, 0]} barSize={16} isAnimationActive={false} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+          {report && (
+            <>
+              <div className="pdf-section-title">Detailed Analysis Report</div>
+              <div className="pdf-report">
+                <ReactMarkdown>{report}</ReactMarkdown>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
