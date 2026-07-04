@@ -382,7 +382,7 @@ export default function App() {
             value={repoName}
             onChange={(e) => setRepoName(e.target.value)}
             placeholder="Owner/Repository (e.g.: facebook/react)"
-            onKeyDown={(e) => e.key === 'Enter' && !loading && handleAnalyze()}
+            onKeyDown={(e) => e.key === 'Enter' && !loading && analyzeRepo()}
           />
 
           <div className="filter-wrapper">
@@ -413,7 +413,7 @@ export default function App() {
             <ChevronDown size={14} className="filter-arrow" />
           </div>
 
-          <button className={`btn-primary ${isExporting ? 'spin' : ''}`} onClick={handleAnalyze} disabled={loading || isExporting || !repoName}>
+          <button className={`btn-primary ${isExporting ? 'spin' : ''}`} onClick={analyzeRepo} disabled={loading || isExporting || !repoName}>
             {loading ? <><Loader2 className="spin" size={18} /> Thinking...</> : '✨ Analyze'}
           </button>
           <button onClick={exportPDF} disabled={!executiveData} className={executiveData ? "btn-primary download-pulse" : "btn-secondary"}>
