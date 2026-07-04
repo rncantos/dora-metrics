@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import ReactMarkdownPkg from 'react-markdown';
 import CountUpPkg from 'react-countup';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Download, History, Terminal, Loader2, GitBranch, Moon, Sun, Bell } from 'lucide-react';
+import { Download, History, Terminal, Loader2, GitBranch, Moon, Sun, Bell, ChevronDown, Calendar, Users } from 'lucide-react';
 import domtoimage from 'dom-to-image-more';
 import { jsPDF } from 'jspdf';
 
@@ -12,6 +12,8 @@ import './index.css';
 
 export default function App() {
   const [repoName, setRepoName] = useState('langchain-ai/langchain');
+  const [dateRange, setDateRange] = useState('Last 30 Days');
+  const [team, setTeam] = useState('All Teams');
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState('');
   const [executiveData, setExecutiveData] = useState(null);
@@ -135,7 +137,11 @@ export default function App() {
       const res = await fetch('http://127.0.0.1:8000/api/analyze/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ repo_name: repoName })
+        body: JSON.stringify({ 
+          repo_name: repoName,
+          date_range: dateRange,
+          team: team
+        })
       });
 
       if (!res.ok) {
@@ -336,9 +342,38 @@ export default function App() {
             value={repoName}
             onChange={(e) => setRepoName(e.target.value)}
             placeholder="Owner/Repository (e.g.: facebook/react)"
-            onKeyDown={(e) => e.key === 'Enter' && !loading && analyzeRepo()}
+            onKeyDown={(e) => e.key === 'Enter' && !loading && handleAnalyze()}
           />
-          <button onClick={analyzeRepo} disabled={loading} className="btn-primary">
+
+          <div className="filter-wrapper">
+            <Calendar size={14} className="filter-icon" />
+            <select 
+              className="filter-select" 
+              value={dateRange} 
+              onChange={(e) => setDateRange(e.target.value)}
+            >
+              <option value="Last 7 Days">Last 7 Days</option>
+              <option value="Last 30 Days">Last 30 Days</option>
+              <option value="YTD">YTD</option>
+            </select>
+            <ChevronDown size={14} className="filter-arrow" />
+          </div>
+
+          <div className="filter-wrapper">
+            <Users size={14} className="filter-icon" />
+            <select 
+              className="filter-select" 
+              value={team} 
+              onChange={(e) => setTeam(e.target.value)}
+            >
+              <option value="All Teams">All Teams</option>
+              <option value="Frontend Squad">Frontend Squad</option>
+              <option value="Backend Squad">Backend Squad</option>
+            </select>
+            <ChevronDown size={14} className="filter-arrow" />
+          </div>
+
+          <button className={`btn-primary ${isExporting ? 'spin' : ''}`} onClick={handleAnalyze} disabled={loading || isExporting || !repoName}>
             {loading ? <><Loader2 className="spin" size={18} /> Thinking...</> : '✨ Analyze'}
           </button>
           <button onClick={exportPDF} disabled={!executiveData} className={executiveData ? "btn-primary download-pulse" : "btn-secondary"}>
