@@ -16,6 +16,7 @@ os.environ["PYTHONWARNINGS"] = "ignore"
 
 from dotenv import load_dotenv
 from dora_metrics.agent import create_dora_agent
+from slack_notifier import send_dora_slack_alert
 
 load_dotenv()
 
@@ -37,6 +38,11 @@ app.add_middleware(
 class AnalyzeRequest(BaseModel):
     repo_name: str = Field(..., pattern=r"^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$")
 
+class AlertRequest(BaseModel):
+    repo_name: str
+    metrics: dict
+    webhook_url: str = None
+
 @app.get("/api/history")
 def get_history():
     os.makedirs("reports", exist_ok=True)
@@ -50,6 +56,18 @@ def get_history():
         except Exception as e:
             print(f"Error reading {f}: {e}")
     return history
+
+@app.post("/api/alert")
+@limiter.limit("10/minute")
+def trigger_slack_alert(req: AlertRequest, request: Request):
+    success = send_dora_slack_alert(
+        repo_name=req.repo_name,
+        metrics=req.metrics,
+        webhook_url=req.webhook_url
+    )
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to send Slack alert. Check webhook URL.")
+    return {"status": "success", "message": "Alert sent to Slack"}
 
 @app.post("/api/analyze/stream")
 @limiter.limit("100/minute")

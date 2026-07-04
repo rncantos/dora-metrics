@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import ReactMarkdownPkg from 'react-markdown';
 import CountUpPkg from 'react-countup';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Download, History, Terminal, Loader2, GitBranch, Moon, Sun } from 'lucide-react';
+import { Download, History, Terminal, Loader2, GitBranch, Moon, Sun, Bell } from 'lucide-react';
 import domtoimage from 'dom-to-image-more';
 import { jsPDF } from 'jspdf';
 
@@ -91,6 +91,28 @@ export default function App() {
       if (mainContent) mainContent.style.display = 'block';
       if (sidebar) sidebar.style.display = 'block';
       setIsExporting(false);
+    }
+  };
+
+  const handleSlackAlert = async () => {
+    if (!executiveData) return;
+    try {
+      const response = await fetch('http://127.0.0.1:8000/api/alert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          repo_name: repoName,
+          metrics: executiveData
+        })
+      });
+      if (response.ok) {
+        alert("Alert sent to Slack successfully!");
+      } else {
+        alert("Failed to send Slack alert. Make sure SLACK_WEBHOOK_URL is set in backend .env");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Error triggering Slack alert.");
     }
   };
 
@@ -321,6 +343,14 @@ export default function App() {
           </button>
           <button onClick={exportPDF} disabled={!executiveData} className={executiveData ? "btn-primary download-pulse" : "btn-secondary"}>
             <Download size={18} /> PDF
+          </button>
+          <button 
+            onClick={handleSlackAlert} 
+            disabled={!executiveData} 
+            className="btn-secondary"
+            title="Send Alert to Slack"
+          >
+            <Bell size={18} /> Alert
           </button>
           <button 
             className="btn-secondary" 
