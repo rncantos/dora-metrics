@@ -19,6 +19,7 @@ export default function App() {
   const [logs, setLogs] = useState([]);
   const [isExporting, setIsExporting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [selectedDrillDown, setSelectedDrillDown] = useState(null);
   const dashboardRef = useRef(null);
   const pdfRef = useRef(null);
 
@@ -240,6 +241,26 @@ export default function App() {
     return strVal;
   };
 
+  const handleChartClick = (data, type) => {
+    if (!data || !data.activePayload || !data.activePayload.length) return;
+    const payload = data.activePayload[0].payload;
+    
+    const mockData = {
+      title: type === 'trend' ? `Bottleneck PRs for ${payload.month || 'Month'}` : `Details for ${payload.subject || 'Category'}`,
+      items: type === 'trend' 
+        ? [
+            { id: '#1042', desc: 'Refactor core module', time: '14 days' },
+            { id: '#1055', desc: 'Update dependencies', time: '5 days' },
+            { id: '#1060', desc: 'Fix race condition', time: '7 days' }
+          ]
+        : [
+            { id: 'INC-201', desc: 'Database timeout', time: '2 hours' },
+            { id: 'INC-204', desc: 'Memory leak in worker', time: '4 hours' }
+          ]
+    };
+    setSelectedDrillDown(mockData);
+  };
+
   return (
     <div className="app-layout">
       {/* Efecto WOW: PDF Exporting Overlay */}
@@ -268,6 +289,25 @@ export default function App() {
             </div>
             <h2>Analysis Complete</h2>
             <p>DORA Metrics have been successfully generated.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Modal for Drill-down */}
+      {selectedDrillDown && (
+        <div className="drilldown-overlay" onClick={() => setSelectedDrillDown(null)}>
+          <div className="drilldown-modal" onClick={e => e.stopPropagation()}>
+            <button className="drilldown-close" onClick={() => setSelectedDrillDown(null)}>✕</button>
+            <h3>{selectedDrillDown.title}</h3>
+            <div className="drilldown-list">
+              {selectedDrillDown.items.map((item, idx) => (
+                <div key={idx} className="drilldown-item">
+                  <span className="drilldown-id">{item.id}</span>
+                  <span className="drilldown-desc">{item.desc}</span>
+                  <span className="drilldown-time">{item.time}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -384,7 +424,7 @@ export default function App() {
                     <h3 style={{marginTop:0, color: '#fafafa', fontSize: '0.85rem', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase'}}>Historical PR Cycle Trend</h3>
                     <div style={{ width: '100%', height: 250 }}>
                       <ResponsiveContainer>
-                        <LineChart data={executiveData.trend_data}>
+                        <LineChart data={executiveData.trend_data} onClick={(e) => handleChartClick(e, 'trend')} style={{ cursor: 'pointer' }}>
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                           <XAxis dataKey="month" stroke="#a1a1aa" tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={false} tickLine={false} />
                           <YAxis stroke="#a1a1aa" allowDecimals={false} tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={false} tickLine={false} />
@@ -402,7 +442,7 @@ export default function App() {
                     <h3 style={{marginTop:0, color: '#fafafa', fontSize: '0.85rem', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase'}}>DORA Elite Benchmarking Score</h3>
                     <div style={{ width: '100%', height: 250 }}>
                       <ResponsiveContainer>
-                        <BarChart data={executiveData.chart_data} layout="vertical" margin={{ top: 0, right: 30, left: 20, bottom: 0 }}>
+                        <BarChart data={executiveData.chart_data} layout="vertical" margin={{ top: 0, right: 30, left: 20, bottom: 0 }} onClick={(e) => handleChartClick(e, 'benchmark')} style={{ cursor: 'pointer' }}>
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" horizontal={true} vertical={false} />
                           <XAxis type="number" domain={[0, 100]} stroke="#a1a1aa" tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={false} tickLine={false} />
                           <YAxis dataKey="subject" type="category" stroke="#a1a1aa" tick={{fill: '#a1a1aa', fontSize: 12}} axisLine={false} tickLine={false} width={80} />
