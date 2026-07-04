@@ -172,13 +172,63 @@ body::before {
   display: flex;
   gap: 0.75rem;
   width: 100%;
-  max-width: 600px;
+  max-width: 900px;
   margin-bottom: 4rem;
   background: var(--bg-panel);
   padding: 0.5rem;
   border-radius: 9999px;
   border: var(--glass-border);
   box-shadow: 0 0 0 1px rgba(0,0,0,0.5), 0 8px 30px rgba(0,0,0,0.4);
+  align-items: center;
+}
+
+/* Filter Dropdowns */
+.filter-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  transition: all 0.2s ease;
+}
+
+.filter-wrapper:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.filter-icon {
+  position: absolute;
+  left: 0.75rem;
+  color: #888;
+  pointer-events: none;
+}
+
+.filter-arrow {
+  position: absolute;
+  right: 0.75rem;
+  color: #888;
+  pointer-events: none;
+}
+
+.filter-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 0.85rem;
+  font-family: inherit;
+  padding: 0.75rem 2.25rem 0.75rem 2.25rem;
+  cursor: pointer;
+  outline: none;
+  width: 100%;
+}
+
+.filter-select option {
+  background: #000;
+  color: #fff;
 }
 
 input[type="text"] {
