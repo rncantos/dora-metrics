@@ -33,6 +33,7 @@ For more detailed information, check the following documents in the `docs/` fold
 - [Setup and Installation](docs/setup.md)
 - [System Architecture](docs/architecture.md)
 - [API Documentation](docs/api.md)
+- [Contributing Guide](CONTRIBUTING.md)
 
 ## Prerequisites
 
@@ -59,4 +60,4 @@ For more detailed information, check the following documents in the `docs/` fold
 
 ## License
 
-This project is open-source.
+This project is licensed under the [MIT License](LICENSE).
