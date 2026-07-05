@@ -1,12 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import ReactMarkdownPkg from 'react-markdown';
-import CountUpPkg from 'react-countup';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Download, History, Terminal, Loader2, GitBranch, Moon, Sun, Bell, ChevronDown, Calendar, Users } from 'lucide-react';
 import domtoimage from 'dom-to-image-more';
 import { jsPDF } from 'jspdf';
 
-const CountUp = CountUpPkg.default || CountUpPkg;
 const ReactMarkdown = ReactMarkdownPkg.default || ReactMarkdownPkg;
 import './index.css';
 
