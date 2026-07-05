@@ -1,63 +1,87 @@
-# DORA Metrics Analyzer
+<p align="center">
+  <img src="docs/assets/dora_dashboard.jpg" alt="DORA Metrics Analyzer Dashboard" width="800" style="border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
+</p>
 
-DORA Metrics Analyzer is a comprehensive tool (CLI and Web) that allows you to calculate and analyze the DORA metrics (Deployment Frequency, Lead Time for Changes, Mean Time to Recovery, Change Failure Rate) and PR Cycle Time of GitHub repositories. It uses Artificial Intelligence (Google Gemini) along with LangChain and the GitHub API to extract data, analyze it, and generate detailed reports.
+<h1 align="center">🚀 DORA Metrics Analyzer</h1>
 
-## Features
+<p align="center">
+  <strong>The Ultimate AI-Powered DevOps Intelligence Platform</strong>
+</p>
 
-- **Enterprise PDF Export:** Generates highly corporate, vectorized PDF reports with standard commercial formatting (Cover pages, recurring headers/footers, justified typography).
-- **DORA Metrics Analysis:** Automatically calculates the 4 key metrics of software delivery performance.
-- **PR Cycle Time:** Average time from pull request creation to merge.
-- **Change Failure Rate:** Identification of releases that introduced bugs or regressions.
-- **Integrated Artificial Intelligence:** Uses `gemini-2.5-flash` through LangChain to analyze Pull Requests, Releases, and Issues in strictly enforced English.
-- **Complete Web Application:**
-  - Backend with FastAPI that supports Streaming (SSE) to view the analysis in real-time.
-  - Modern, minimalist, and dynamic frontend designed for a "WOW effect" using React, Vite, and Recharts.
-- **Enterprise Security:** Implements robust CORS, SlowAPI Rate Limiting, Pydantic input validations, and Bandit SAST checking.
-- **CI/CD & Versioning:** Fully automated CI via GitHub Actions (Node 24) and automated Semantic Versioning via `release-please`.
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge&logo=python" alt="Python">
+  <img src="https://img.shields.io/badge/Node.js-24-green?style=for-the-badge&logo=node.js" alt="Node.js">
+  <img src="https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi" alt="FastAPI">
+  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React">
+  <img src="https://img.shields.io/badge/AI-Google_Gemini-FF6F00?style=for-the-badge&logo=google" alt="Google Gemini">
+  <img src="https://img.shields.io/badge/License-MIT-purple?style=for-the-badge" alt="License">
+</p>
 
-## Project Structure
+<p align="center">
+  Unlock elite engineering performance. Calculate, visualize, and analyze your DORA Metrics (Deployment Frequency, Lead Time, MTTR, CFR) completely automatically through the GitHub API and advanced LLM reasoning.
+</p>
 
-The project is divided into the following main areas:
+---
 
-- `main.py`: Entry point for the CLI.
-- `backend.py`: FastAPI server that exposes the API endpoints.
-- `dora_metrics/`: Python package containing the LangChain agent logic and tools to interact with GitHub.
-- `frontend/`: SPA (Single Page Application) developed in React + Vite.
-- `reports/`: Directory where the generated analyses are stored.
-- `docs/`: Detailed project documentation.
+## ✨ The WOW Factor
 
-## Documentation
+Traditional dashboards just show you raw numbers. **DORA Metrics Analyzer** is different. By natively integrating **Google Gemini 2.5 Flash** through LangChain, we don't just calculate your metrics; we *read* your Pull Requests, *understand* your release notes, and *detect* exactly which deploys caused regressions.
 
-For more detailed information, check the following documents in the `docs/` folder:
+- **🌌 Stunning Glassmorphism UI:** Built with React, Vite, and Recharts. An interface so sleek and responsive your engineering team will actually *want* to check their metrics.
+- **📄 Enterprise PDF Exports:** Generate breathtaking, highly corporate PDF reports directly from the browser. Complete with vectorized charts, beautiful cover pages, and recurring footers.
+- **⚡ Real-Time Streaming (SSE):** Watch your AI analysis stream live onto the screen. No more staring at loading spinners while the LLM thinks.
+- **🛡️ Enterprise Security First:** Hardened with SlowAPI Rate Limiting, strict Pydantic validations, and Bandit SAST checks on every commit.
 
-- [Setup and Installation](docs/setup.md)
-- [System Architecture](docs/architecture.md)
-- [API Documentation](docs/api.md)
-- [Contributing Guide](CONTRIBUTING.md)
+## 📊 Core Features
 
-## Prerequisites
+| Feature | Description |
+|---|---|
+| **Deployment Frequency** | Accurately calculates how often your team successfully releases to production. |
+| **Lead Time for Changes** | Measures the exact time from the first commit to production deployment. |
+| **Change Failure Rate** | AI automatically correlates your incident reports to your releases. |
+| **Mean Time to Recovery** | Measures how quickly your team bounces back from a failure. |
+| **PR Cycle Time** | Analyzes code review bottlenecks to speed up your pipeline. |
 
-- Python 3.8 or higher
-- Node.js 18 or higher
-- A GitHub Personal Access Token (`GITHUB_TOKEN`)
-- A Google Gemini API Key (`GOOGLE_API_KEY`)
+## 🚀 Quick Start
 
-## Quick Start (CLI)
+Get your elite DevOps dashboard running locally in under 2 minutes.
 
-1. Clone the repository and install the Python dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-2. Configure your environment variables in a `.env` file:
-   ```env
-   GITHUB_TOKEN=your_github_token
-   GOOGLE_API_KEY=your_google_api_key
-   ```
-3. Run the analysis from the terminal:
-   ```bash
-   python main.py
-   ```
+### 1. Prerequisites
+- Python 3.10+ and Node.js 24+
+- `GITHUB_TOKEN` (for repository access)
+- `GOOGLE_API_KEY` (for Gemini AI analysis)
 
-## License
+### 2. Setup
+Clone the repository and install dependencies:
+```bash
+git clone https://github.com/rncantos/dora-metrics.git
+cd dora-metrics
+```
 
-This project is licensed under the [MIT License](LICENSE).
+**Backend:**
+```bash
+pip install -r requirements.txt
+cp .env.example .env # Add your keys here
+uvicorn backend:app --reload
+```
+
+**Frontend:**
+```bash
+cd frontend
+npm ci
+npm run dev
+```
+
+Open `http://localhost:5173` and prepare to be amazed.
+
+## 📚 Documentation
+
+Dive deeper into our architecture, API, and setup guides:
+- 📖 [Setup and Installation Guide](docs/setup.md)
+- 🏗️ [System Architecture](docs/architecture.md)
+- 🔌 [API Documentation](docs/api.md)
+- 🤝 [Contributing Guidelines](CONTRIBUTING.md)
+
+## 📝 License
+
+Designed and engineered with ❤️. Licensed under the [MIT License](LICENSE).
