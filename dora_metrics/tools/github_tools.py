@@ -17,10 +17,12 @@ def fetch_recent_pull_requests(repo_name: str, limit: int = 50) -> List[Dict[str
     """
     g = get_github_client()
     repo = g.get_repo(repo_name)
-    prs = repo.get_pulls(state="closed", sort="updated", direction="desc")[:limit]
+    prs = repo.get_pulls(state="closed", sort="updated", direction="desc")
     
     result = []
-    for pr in prs:
+    for i, pr in enumerate(prs):
+        if i >= limit:
+            break
         if pr.merged_at:
             result.append({
                 "number": pr.number,
@@ -39,10 +41,12 @@ def fetch_recent_releases(repo_name: str, limit: int = 20) -> List[Dict[str, Any
     """
     g = get_github_client()
     repo = g.get_repo(repo_name)
-    releases = repo.get_releases()[:limit]
+    releases = repo.get_releases()
     
     result = []
-    for rel in releases:
+    for i, rel in enumerate(releases):
+        if i >= limit:
+            break
         result.append({
             "tag_name": rel.tag_name,
             "created_at": rel.created_at.isoformat(),
@@ -58,10 +62,12 @@ def fetch_recent_issues(repo_name: str, limit: int = 50) -> List[Dict[str, Any]]
     """
     g = get_github_client()
     repo = g.get_repo(repo_name)
-    issues = repo.get_issues(state="all", sort="created", direction="desc")[:limit]
+    issues = repo.get_issues(state="all", sort="created", direction="desc")
     
     result = []
-    for issue in issues:
+    for i, issue in enumerate(issues):
+        if i >= limit:
+            break
         # Ignorar pull requests que la API de GitHub también devuelve como issues
         if issue.pull_request is None:
             labels = [label.name.lower() for label in issue.labels]
