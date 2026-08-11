@@ -194,6 +194,7 @@ export default function App() {
                   setShowSuccess(true);
                   setTimeout(() => setShowSuccess(false), 3000);
                 } else if (data.type === 'error') {
+                  hasFinished = true;
                   setLogs(l => [...l, { type: 'error', text: `❌ Engine failure: ${data.content}` }]);
                 }
               } catch (parseErr) {
@@ -218,6 +219,7 @@ export default function App() {
             setShowSuccess(true);
             setTimeout(() => setShowSuccess(false), 3000);
           } else if (data.type === 'error') {
+            hasFinished = true;
             alert(`Engine failure: ${data.content}`);
             setLogs(l => [...l, { type: 'error', text: `❌ Engine failure: ${data.content}` }]);
           }
