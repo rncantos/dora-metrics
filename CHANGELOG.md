@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/rncantos/dora-metrics/compare/v1.1.0...v1.1.1) (2026-08-11)
+
+
+### Bug Fixes
+
+* prevent generic interruption alert on backend errors ([#14](https://github.com/rncantos/dora-metrics/issues/14)) ([#15](https://github.com/rncantos/dora-metrics/issues/15)) ([611df32](https://github.com/rncantos/dora-metrics/commit/611df3292f8a7063cafb3d849e0a3fdf1ad8c9b4))
+
 ## [1.1.0](https://github.com/rncantos/dora-metrics/compare/v1.0.0...v1.1.0) (2026-07-05)
 
 
